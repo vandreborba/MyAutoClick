@@ -111,4 +111,27 @@ def aguardar_carregamento_pagina(
             print(f"Mensagem: {str(e)}")
             print(f"Argumentos: {e.args}")
             return False
-            
+
+def solicitar_credenciais(nome_sistema=""):
+    """
+    Solicita ao usuário o login, a senha.
+
+    Retorna:
+        tuple: Uma tupla contendo o sistema, o login e a senha fornecidos pelo usuário.
+    """
+    # Solicita o login ao usuário
+    login = pyautogui.prompt(f"Digite seu login para acessar o sistema {nome_sistema}:")
+    # Solicita a senha ao usuário
+    senha = pyautogui.password(f"Digite sua senha para acessar o sistema {nome_sistema}:")
+    return login, senha
+
+def pressionar_tab(vezes):
+    """
+    Pressiona a tecla TAB um número específico de vezes.
+
+    Args:
+        vezes (int): Número de vezes que a tecla TAB deve ser pressionada.
+    """
+    for _ in range(vezes):
+        pyautogui.press('tab')
+    print(f"Tecla TAB pressionada {vezes} vezes.")
