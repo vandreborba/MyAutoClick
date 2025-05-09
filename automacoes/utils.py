@@ -1,6 +1,11 @@
 import os
 import pyautogui
 import time
+from cryptography.fernet import Fernet
+import base64
+
+CAMINHO_ARQUIVO_CREDENCIAIS = os.path.join(os.path.expanduser('~'), '.credenciais_sistema')
+CAMINHO_ARQUIVO_CHAVE = os.path.join(os.path.expanduser('~'), '.chave_criptografia')
 
 def preparar_navegador(url):
     """ 
@@ -112,17 +117,75 @@ def aguardar_carregamento_pagina(
             print(f"Argumentos: {e.args}")
             return False
 
+def gerar_e_salvar_chave_criptografia():
+    """
+    Gera uma chave de criptografia e salva em arquivo local.
+    """
+    chave = Fernet.generate_key()
+    with open(CAMINHO_ARQUIVO_CHAVE, 'wb') as arquivo_chave:
+        arquivo_chave.write(chave)
+    return chave
+
+def carregar_chave_criptografia():
+    """
+    Carrega a chave de criptografia do arquivo local, gerando uma nova se não existir.
+    """
+    if not os.path.exists(CAMINHO_ARQUIVO_CHAVE):
+        return gerar_e_salvar_chave_criptografia()
+    with open(CAMINHO_ARQUIVO_CHAVE, 'rb') as arquivo_chave:
+        return arquivo_chave.read()
+
+def salvar_credenciais_criptografadas(login, senha):
+    """
+    Salva o login e a senha criptografados em um arquivo local.
+    """
+    chave = carregar_chave_criptografia()
+    fernet = Fernet(chave)
+    dados = f"{login}\n{senha}".encode('utf-8')
+    dados_criptografados = fernet.encrypt(dados)
+    with open(CAMINHO_ARQUIVO_CREDENCIAIS, 'wb') as arquivo:
+        arquivo.write(dados_criptografados)
+
+def carregar_credenciais_criptografadas():
+    """
+    Carrega o login e a senha criptografados do arquivo local.
+    Retorna uma tupla (login, senha) ou (None, None) se não existir.
+    """
+    if not os.path.exists(CAMINHO_ARQUIVO_CREDENCIAIS):
+        return None, None
+    chave = carregar_chave_criptografia()
+    fernet = Fernet(chave)
+    with open(CAMINHO_ARQUIVO_CREDENCIAIS, 'rb') as arquivo:
+        dados_criptografados = arquivo.read()
+    try:
+        dados = fernet.decrypt(dados_criptografados).decode('utf-8')
+        login, senha = dados.split('\n', 1)
+        return login, senha
+    except Exception as erro:
+        print(f"[ERRO] Não foi possível descriptografar as credenciais: {erro}")
+        return None, None
+
 def solicitar_credenciais(nome_sistema=""):
     """
-    Solicita ao usuário o login, a senha.
+    Solicita ao usuário o login e a senha, com opção de salvar e reutilizar as credenciais criptografadas.
 
     Retorna:
-        tuple: Uma tupla contendo o sistema, o login e a senha fornecidos pelo usuário.
+        tuple: Uma tupla contendo o login e a senha fornecidos pelo usuário.
     """
+    # Tenta carregar credenciais salvas
+    login, senha = carregar_credenciais_criptografadas()
+    if login and senha:
+        return login, senha
+    
     # Solicita o login ao usuário
     login = pyautogui.prompt(f"Digite seu login para acessar o sistema {nome_sistema}:")
     # Solicita a senha ao usuário
     senha = pyautogui.password(f"Digite sua senha para acessar o sistema {nome_sistema}:")
+    # Pergunta se deseja salvar as credenciais
+    salvar = pyautogui.confirm(text="Deseja salvar estas credenciais criptografadas para uso futuro?", buttons=["Sim", "Não"])
+    if salvar == "Sim":
+        salvar_credenciais_criptografadas(login, senha)
+        print("[INFO] Credenciais salvas com criptografia.")
     return login, senha
 
 def pressionar_tab(vezes):
