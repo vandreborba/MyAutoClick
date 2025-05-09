@@ -21,13 +21,8 @@ def executarSequenciaPMC():
     Função para acessar o site da PMC e inicializar o WebDriver.
     """
     try:
-        urlPMC = "https://portalweb.ibge.gov.br/f5-w-687474703a2f2f77332e706d632e696267652e676f762e6272$$/"        
-        # Acessa o site Portal Web (primeiro acesso abre o portal intermediário)
-        driver.get(urlPMC)      
-        print("[INFO] Acessando o site Portal Web PMC/PMS...")          
-        # O primeiro acesso carrega o portal web, que funciona como um gateway.
-        # Após o carregamento, é necessário acessar novamente para abrir o site PMC correto.
-        time.sleep(3)      
+        urlPMC = "https://pmc.ibge.gov.br/"        
+        # Acessa o site Portal Web (primeiro acesso abre o portal intermediário)        
         print("[INFO] Acessando o site PMC...")
         driver.get(urlPMC) 
 
@@ -115,13 +110,8 @@ def executarSequenciaPMS():
     global login_usuario, senha_usuario, driver  # Adicionado 'driver' como global    
 
     try:
-        urlPMS = "https://portalweb.ibge.gov.br/f5-w-687474703a2f2f77332e706d732e696267652e676f762e6272$$/"
-        # Acessa o site Portal Web (primeiro acesso abre o portal intermediário)
-        driver.get(urlPMS)
-        print("[INFO] Acessando o site Portal Web PMS...", flush=True)
-        # O primeiro acesso carrega o portal web, que funciona como um gateway.
-        # Após o carregamento, é necessário acessar novamente para abrir o site PMS correto.
-        time.sleep(3)
+        urlPMS = "https://pms.ibge.gov.br/"     
+        # Acessa o site Portal Web (primeiro acesso abre o portal intermediário)        
         print("[INFO] Acessando o site PMS...", flush=True)
         driver.get(urlPMS)
 
@@ -192,6 +182,79 @@ def executarSequenciaPMS():
 
     return driver
 
+def ler_arquivo_csv_coringa(caminho):
+    """
+    Tenta ler o arquivo CSV usando UTF-8, se falhar tenta latin-1.
+    Retorna as linhas do arquivo.
+    """
+    try:
+        with open(caminho, 'r', encoding='utf-8') as f:
+            return f.readlines()
+    except UnicodeDecodeError:
+        with open(caminho, 'r', encoding='latin-1') as f:
+            return f.readlines()
+
+def juntarArquivosCSV():
+    """
+    Função para juntar os dois arquivos CSV exportados (PMC e PMS), mantendo apenas um cabeçalho.
+    O arquivo final será salvo como 'relatorio_mensal_unificado.csv' na pasta Downloads.
+    """
+    import glob
+    import os
+    
+    # Define a pasta de downloads do usuário
+    pasta_downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+    padrao_arquivo = os.path.join(pasta_downloads, '*.csv')
+    arquivos_csv = sorted(glob.glob(padrao_arquivo), key=os.path.getctime, reverse=True)
+    
+    if len(arquivos_csv) < 2:
+        print("[ERRO] Não foram encontrados dois arquivos CSV para juntar.")
+        return None
+    
+    # Seleciona os dois arquivos CSV mais recentes
+    arquivo_csv1 = arquivos_csv[0]
+    arquivo_csv2 = arquivos_csv[1]
+    print(f"[INFO] Juntando arquivos: {arquivo_csv1} e {arquivo_csv2}")
+    
+    linhas_unificadas = []
+    linhas1 = ler_arquivo_csv_coringa(arquivo_csv1)
+    linhas2 = ler_arquivo_csv_coringa(arquivo_csv2)
+    if not linhas1 or not linhas2:
+        print("[ERRO] Um dos arquivos CSV está vazio.")
+        return None
+    # Adiciona o cabeçalho do primeiro arquivo
+    linhas_unificadas.append(linhas1[0].strip())
+    # Adiciona os dados do primeiro arquivo (sem o cabeçalho)
+    linhas_unificadas.extend([linha.strip() for linha in linhas1[1:]])
+    # Adiciona os dados do segundo arquivo (sem o cabeçalho)
+    linhas_unificadas.extend([linha.strip() for linha in linhas2[1:]])
+    
+    # Salva o arquivo unificado
+    arquivo_unificado = os.path.join(pasta_downloads, 'relatorio_mensal_unificado.csv')
+    with open(arquivo_unificado, 'w', encoding='utf-8') as f:
+        for linha in linhas_unificadas:
+            f.write(linha + '\n')
+    print(f"[SUCESSO] Arquivo unificado salvo em: {arquivo_unificado}")
+    return arquivo_unificado
+
+def copiarAreadeTransferencia():
+    """
+    Função para copiar o conteúdo do arquivo unificado para a área de transferência, formatando como tabela com tabs para colar no Excel.
+    """
+    import os
+    import pyperclip
+    pasta_downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
+    arquivo_unificado = os.path.join(pasta_downloads, 'relatorio_mensal_unificado.csv')
+    if not os.path.exists(arquivo_unificado):
+        print("[ERRO] Arquivo unificado não encontrado para copiar para a área de transferência.")
+        return
+    with open(arquivo_unificado, 'r', encoding='utf-8') as f:
+        conteudo = f.read()
+    # Substitui as vírgulas por tabs para facilitar a colagem no Excel
+    conteudo_com_tabs = '\n'.join(['\t'.join(linha.split(',')) for linha in conteudo.splitlines()])
+    pyperclip.copy(conteudo_com_tabs)
+    print("[SUCESSO] Conteúdo do relatório unificado copiado para a área de transferência (formato Excel).")
+
 def executar():
     global driver, login_usuario, senha_usuario  # Indica que as variáveis são globais e podem ser modificadas nesta função
     # Solicita as credenciais do usuário e armazena nas variáveis globais
@@ -202,14 +265,15 @@ def executar():
     print("Iniciando automação de relatórios mensais...")        
     executarSequenciaPMC()
     executarSequenciaPMS()
+    juntarArquivosCSV()
+    copiarAreadeTransferencia()
+    # Fecha o WebDriver
+    driver.quit()
     print("Automação de relatórios mensais concluída.")
 
-    # Copia o conteúdo do CSV exportado para a área de transferência
-
-    if conteudo_csv_exportado:
-        pyperclip.copy(conteudo_csv_exportado)
-        print("[INFO] Conteúdo do CSV exportado copiado para a área de transferência.")
-    else:
-        print("[ATENÇÃO] Variável conteudo_csv_exportado está vazia, nada foi copiado.")
 
 
+
+# para teste.
+if __name__ == "__main__":
+    juntarArquivosCSV()

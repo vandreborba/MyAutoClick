@@ -17,3 +17,9 @@
 ## Selenium Utilities
 - **Centralização de Funções:** Todas as funções relacionadas ao Selenium devem ser centralizadas no arquivo `util_selenium.py` para facilitar a reutilização e manutenção.
 - **Boas Práticas:** Utilize as funções de `util_selenium.py` sempre que possível para evitar duplicação de código.
+
+# Para compilar o projeto e gerar um único arquivo .exe na área de trabalho, execute:
+#
+# pyinstaller --onefile --distpath "%USERPROFILE%\Desktop" --name MyAutoClicker main.py 
+#
+# Utilize este comando sempre que solicitar a compilação do projeto.
