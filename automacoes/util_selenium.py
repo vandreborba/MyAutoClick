@@ -25,26 +25,44 @@ def inicializar_webdriver():
 
 def inicializar_webdriver_com_perfil():
     """
-    Inicializa o WebDriver do Selenium utilizando o perfil padrão do usuário do Windows,
-    permitindo que qualquer usuário mantenha seus logins e preferências salvos.
-    
+    Inicializa o WebDriver do Selenium utilizando um diretório de perfil exclusivo para automação,
+    conforme recomendado para ChromeDriver v136+.
+    O usuário pode logar uma vez nesse perfil e a sessão será mantida nas próximas execuções.
+
     Retorna:
-        WebDriver: Instância do WebDriver configurada com o perfil do usuário.
+        WebDriver: Instância do WebDriver configurada com o perfil de automação.
     """
     opcoes = Options()
-    # Obtém o caminho do diretório do usuário atual do Windows
+    # Diretório exclusivo para automação (não usar o padrão do usuário)
+    caminho_perfil_automacao = os.path.abspath('./chrome_temp_profile')
+    if not os.path.exists(caminho_perfil_automacao):
+        os.makedirs(caminho_perfil_automacao)
+    opcoes.add_argument(f"--user-data-dir={caminho_perfil_automacao}")
+    opcoes.add_argument("--profile-directory=Default")
+    opcoes.add_argument('--disable-extensions')
+    opcoes.add_argument('--no-sandbox')    
+    opcoes.add_argument('--disable-gpu')
+    opcoes.add_argument('--disable-software-rasterizer')
+    opcoes.add_argument('--disable-dev-shm-usage')
 
-    caminho_usuario = os.path.expanduser('~')
-    caminho_perfil = rf"{caminho_usuario}\AppData\Local\Google\Chrome\User Data"
-    opcoes.add_argument(f"user-data-dir={caminho_perfil}")
-    # (Opcional) Pode-se especificar um perfil, ex: 'Profile 1', se necessário
-    # opcoes.add_argument("profile-directory=Profile 1")
-    # Verifica se o Chrome está em execução
-    for processo in psutil.process_iter(['name']):
-        if processo.info['name'] == 'chrome.exe':
-            input("O navegador Chrome está aberto. Por favor, feche-o e pressione Enter para continuar...")
+    # Força o encerramento de todos os processos do Chrome e relacionados
+    processos_encerrar = ['chrome.exe', 'GoogleCrashHandler.exe', 'GoogleUpdate.exe']
+    while True:
+        processos_ativos = [p for p in psutil.process_iter(['name']) if p.info['name'] in processos_encerrar]
+        if processos_ativos:
+            print("[ATENÇÃO] Para continuar, feche TODAS as janelas do Google Chrome e finalize processos em segundo plano.")
+            for proc in processos_ativos:
+                try:
+                    print(f"[INFO] Encerrando processo: {proc.info['name']} (PID: {proc.pid})")
+                    proc.terminate()
+                except Exception as e:
+                    print(f"[ERRO] Não foi possível encerrar {proc.info['name']}: {e}")
+            input("Após fechar/encerrar, pressione Enter para continuar...")
+        else:
             break
+    print(f"[INFO] Iniciando o WebDriver com o perfil de automação em: {caminho_perfil_automacao}")
     driver = webdriver.Chrome(options=opcoes)
+    print(f"[SUCESSO] WebDriver iniciado com o perfil de automação.")
     return driver
 
 # Função para aguardar um elemento estar presente na página
@@ -310,3 +328,107 @@ def passar_mouse_sobre_elemento_por_texto(driver, texto, nome_tag='*', tempo_esp
     )
     ActionChains(driver).move_to_element(elemento).perform()
     print(f"[INFO] Mouse passado sobre o elemento '{texto}'.")
+
+def selecionar_dropdown_por_label(driver, texto_label, valor):
+    """
+    Seleciona um valor em um dropdown (<select>) a partir do texto do label associado.
+
+    Parâmetros:
+        driver: Instância do WebDriver.
+        texto_label: Texto exato do label (ex: 'Ano').
+        valor: Valor a ser selecionado no dropdown (ex: '2025').
+    """
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import Select
+
+    try:
+        # Localiza o label pelo texto
+        label = driver.find_element(By.XPATH, f"//label[normalize-space(text())='{texto_label}']")
+        id_select = label.get_attribute("for")
+        if not id_select:
+            print(f"[ERRO] Label '{texto_label}' não possui atributo 'for'.")
+            return False
+        # Localiza o select pelo id
+        select_element = driver.find_element(By.ID, id_select)
+        select = Select(select_element)
+        try:
+            # Tenta selecionar o valor desejado
+            select.select_by_value(str(valor))
+            print(f"[INFO] Valor '{valor}' selecionado no dropdown '{texto_label}'.")
+            return True
+        except Exception as erro_selecao:
+            # Se não conseguir selecionar, lista as opções disponíveis
+            opcoes_disponiveis = [opcao.get_attribute('value') for opcao in select.options]
+            print(f"[ERRO] Valor '{valor}' não encontrado no dropdown '{texto_label}'. Opções disponíveis: {opcoes_disponiveis}")
+            return False
+    except Exception as erro:
+        # Erro ao localizar o label ou o select
+        print(f"[ERRO] Não foi possível localizar o dropdown associado ao label '{texto_label}': {erro}")
+        return False
+
+def listar_opcoes_dropdown_por_label(driver, texto_label):
+    """
+    Lista todas as opções disponíveis em um dropdown (<select>) a partir do texto do label associado.
+
+    Parâmetros:
+        driver: Instância do WebDriver.
+        texto_label: Texto exato do label (ex: 'Ano').
+    Retorno:
+        lista_opcoes: Lista de dicionários com 'valor' e 'texto' de cada opção.
+        Exemplo: [{'valor': '2025', 'texto': '2025'}, ...]
+        Retorna lista vazia se não encontrar o dropdown.
+    """
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import Select
+
+    lista_opcoes = []
+    try:
+        # Localiza o label pelo texto
+        label = driver.find_element(By.XPATH, f"//label[normalize-space(text())='{texto_label}']")
+        id_select = label.get_attribute("for")
+        if not id_select:
+            print(f"[ERRO] Label '{texto_label}' não possui atributo 'for'.")
+            return []
+        # Localiza o select pelo id
+        select_element = driver.find_element(By.ID, id_select)
+        select = Select(select_element)
+        # Percorre todas as opções do dropdown
+        for opcao in select.options:
+            valor = opcao.get_attribute('value')
+            texto = opcao.text
+            lista_opcoes.append({'valor': valor, 'texto': texto})
+        print(f"[INFO] Opções encontradas no dropdown '{texto_label}': {lista_opcoes}")
+        return lista_opcoes
+    except Exception as erro:
+        # Erro ao localizar o label ou o select
+        print(f"[ERRO] Não foi possível listar opções do dropdown associado ao label '{texto_label}': {erro}")
+        return []
+
+def verificar_texto_presente_na_pagina(driver, texto, tempo_espera=5):
+    """
+    Verifica se um determinado texto está presente na página.
+
+    Parâmetros:
+        driver: Instância do WebDriver.
+        texto: Texto a ser procurado na página.
+        tempo_espera: Tempo máximo de espera em segundos (padrão: 5).
+    Retorno:
+        bool: True se o texto for encontrado, False caso contrário.
+    """
+    import time
+    from selenium.common.exceptions import TimeoutException
+
+    # Aguarda até o tempo_espera, verificando a cada 0.5s
+    tempo_inicial = time.time()
+    while time.time() - tempo_inicial < tempo_espera:
+        try:
+            # Busca o texto no body da página
+            corpo_pagina = driver.find_element('tag name', 'body').text
+            if texto in corpo_pagina:
+                print(f"[INFO] Texto '{texto}' encontrado na página.")
+                return True
+        except Exception as erro:
+            print(f"[ERRO] Erro ao buscar texto na página: {erro}")
+        time.sleep(0.5)
+    print(f"[INFO] Texto '{texto}' NÃO encontrado na página após {tempo_espera} segundos.")
+    return False
