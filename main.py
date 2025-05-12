@@ -1,4 +1,5 @@
-from automacoes import relatorioMensais
+import os
+from automacoes import liberarCodificacao, relatorioMensais
 
 def limpar_credenciais_criptografadas():
     """
@@ -21,19 +22,19 @@ def limpar_credenciais_criptografadas():
 def mostrar_menu():
     print("\n--- MENU ---")
     print("1. Download Relatórios Mensais")
-    print("2. Teste 2")
-    print("9. Limpar credenciais salvas")
+    print("2. Liberar Codificação")    
+    print("9. Limpar credenciais salvas (PMS/PMC)")
     print("0. Sair")
 
-def main():
+def main():    
     executando = True
-    while executando:
+    while executando:       
         mostrar_menu()
         try:
             opcao = int(input("\nEscolha uma opção: "))
             
             if opcao == 1: relatorioMensais.executar()
-            elif opcao == 2: print( "\nTeste 2" )
+            elif opcao == 2: liberarCodificacao.executar()
             elif opcao == 9: limpar_credenciais_criptografadas()
             elif opcao == 0:
                 print("\nSaindo do programa...")

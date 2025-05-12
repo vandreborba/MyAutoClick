@@ -172,6 +172,7 @@ def clicar_elemento_com_fallback(driver, seletor):
 def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_espera=10):
     """
     Tenta clicar em um elemento pelo texto, rolando até ele e usando fallback via JavaScript.
+    Caso ocorra erro, atualiza a página e tenta novamente uma vez.
     
     Parâmetros:
         driver: Instância do WebDriver.
@@ -186,35 +187,52 @@ def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_es
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
 
-    print(f"[INFO] Buscando elemento com texto '{texto}' e tag '{nome_tag}'...")
-    try:
-        # Monta o XPath para buscar o elemento pelo texto
-        xpath = f"//{nome_tag}[contains(normalize-space(text()), '{texto}')]"
-        print(f"[DEBUG] XPath utilizado: {xpath}")
-        elemento = WebDriverWait(driver, tempo_espera).until(
-            EC.element_to_be_clickable((By.XPATH, xpath))
-        )
-        # Rola até o elemento para garantir visibilidade
-        driver.execute_script("arguments[0].scrollIntoView(true);", elemento)
-        print("[INFO] Rolando até o elemento antes do clique.")
+    def tentar_clicar():
+        print(f"[INFO] Buscando elemento com texto '{texto}' e tag '{nome_tag}'...")
         try:
-            elemento.click()
-            print(f"[SUCESSO] Clique realizado normalmente no elemento '{texto}'.")
-            return True
-        except Exception as erro_click:
-            print(f"[ERRO] Clique normal falhou: {erro_click}. Tentando via JavaScript...")
-            driver.execute_script("arguments[0].click();", elemento)
-            print(f"[SUCESSO] Clique realizado via JavaScript no elemento '{texto}'.")
-            return True
-    except Exception as erro:
-        print(f"[ERRO] Não foi possível clicar no elemento com texto '{texto}': {erro}")
+            # Monta o XPath para buscar o elemento pelo texto
+            xpath = f"//{nome_tag}[contains(normalize-space(text()), '{texto}')]"
+            print(f"[DEBUG] XPath utilizado: {xpath}")
+            elemento = WebDriverWait(driver, tempo_espera).until(
+                EC.element_to_be_clickable((By.XPATH, xpath))
+            )
+            # Rola até o elemento para garantir visibilidade
+            driver.execute_script("arguments[0].scrollIntoView(true);", elemento)
+            print("[INFO] Rolando até o elemento antes do clique.")
+            try:
+                elemento.click()
+                print(f"[SUCESSO] Clique realizado normalmente no elemento '{texto}'.")
+                return True
+            except Exception as erro_click:
+                print(f"[ERRO] Clique normal falhou: {erro_click}. Tentando via JavaScript...")
+                driver.execute_script("arguments[0].click();", elemento)
+                print(f"[SUCESSO] Clique realizado via JavaScript no elemento '{texto}'.")
+                return True
+        except Exception as erro:
+            print(f"[ERRO] Não foi possível clicar no elemento com texto '{texto}': {erro}")
+            try:
+                caminho_print = f"screenshot_erro_{texto.replace(' ', '_')}.png"
+                driver.save_screenshot(caminho_print)
+                print(f"[INFO] Screenshot salvo em: {caminho_print}")
+            except Exception as erro_print:
+                print(f"[ERRO] Não foi possível salvar o screenshot: {erro_print}")
+            return False
+
+    # Primeira tentativa de clique
+    if tentar_clicar():
+        return True
+    else:
+        print("[INFO] Atualizando a página e tentando novamente...")
+        driver.refresh()
+        # Opcional: aguarda a página recarregar completamente
         try:
-            caminho_print = f"screenshot_erro_{texto.replace(' ', '_')}.png"
-            driver.save_screenshot(caminho_print)
-            print(f"[INFO] Screenshot salvo em: {caminho_print}")
-        except Exception as erro_print:
-            print(f"[ERRO] Não foi possível salvar o screenshot: {erro_print}")
-        return False
+            WebDriverWait(driver, tempo_espera).until(
+                lambda d: d.execute_script('return document.readyState') == 'complete'
+            )
+        except Exception as erro_espera:
+            print(f"[ERRO] Timeout ao aguardar recarregamento da página: {erro_espera}")
+        # Segunda tentativa de clique
+        return tentar_clicar()
 
 def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
     """
@@ -244,7 +262,13 @@ def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
         print(f"[SUCESSO] Elemento com texto '{texto}' encontrado e visível.")
         return elemento
     except Exception as erro:
-        print(f"[ERRO] Elemento com texto '{texto}' não foi encontrado: {erro}")
+        # Mensagem de erro personalizada para timeout
+        print("""
+[ERRO] Timeout ao aguardar o elemento com texto '{0}' e tag '{1}'.
+Verifique se o elemento realmente existe na página, se o texto está correto ou se há algum problema de carregamento.
+Tempo de espera excedido ({2} segundos).
+Detalhes do erro: {3}
+""".format(texto, nome_tag, tempo_espera, erro))
         try:
             caminho_print = f"screenshot_erro_aguardar_{texto.replace(' ', '_')}.png"
             driver.save_screenshot(caminho_print)
@@ -252,3 +276,37 @@ def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
         except Exception as erro_print:
             print(f"[ERRO] Não foi possível salvar o screenshot: {erro_print}")
         return None
+
+def alternar_para_ultima_aba(driver):
+    """
+    Alterna o foco do Selenium para a última aba/janela aberta no navegador.
+    Útil quando um clique abre uma nova aba automaticamente.
+    Parâmetros:
+        driver: Instância do WebDriver.
+    """
+    # Comentário: Obtém a lista de handles e alterna para o último
+    handles = driver.window_handles
+    driver.switch_to.window(handles[-1])
+    print("[INFO] Alternado para a última aba/janela do navegador.")
+
+def passar_mouse_sobre_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
+    """
+    Move o mouse sobre um elemento identificado pelo texto, simulando o hover necessário para exibir menus suspensos.
+    Parâmetros:
+        driver: Instância do WebDriver.
+        texto: Texto do elemento alvo.
+        nome_tag: Tag HTML do elemento (ex: 'a', 'div'). Use '*' para qualquer tag.
+        tempo_espera: Tempo máximo de espera em segundos.
+    """
+    from selenium.webdriver.common.action_chains import ActionChains
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+
+    print(f"[INFO] Procurando elemento para hover: '{texto}' (tag: {nome_tag})")
+    xpath = f"//{nome_tag}[contains(normalize-space(text()), '{texto}')]"
+    elemento = WebDriverWait(driver, tempo_espera).until(
+        EC.visibility_of_element_located((By.XPATH, xpath))
+    )
+    ActionChains(driver).move_to_element(elemento).perform()
+    print(f"[INFO] Mouse passado sobre o elemento '{texto}'.")
