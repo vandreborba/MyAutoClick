@@ -2,3 +2,4 @@ build/
 .venv/
 __pycache__/
 chrome_temp_profile/
+%USERPROFILE%/Desktop/MyAutoClicker.exe

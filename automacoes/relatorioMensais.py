@@ -9,6 +9,7 @@ from automacoes.util_selenium import aguardar_elemento
 import os 
 import glob  
 import pyperclip
+from automacoes.config_municipio_estado import config_municipio_estado
 
 login_usuario = None  # Variável global para armazenar o login do usuário
 senha_usuario = None  # Variável global para armazenar a senha do usuário
@@ -46,18 +47,18 @@ def executar_sequencia_portal(url_portal, nome_portal):
         aguardar_elemento(driver, (By.ID, "ContentPlaceHolder1_quadroColetaUF"), 10)
         time.sleep(2)
 
-        # Clica no estado Paraná
-        print("[INFO] Clicando no estado Paraná...", flush=True)
-        clicar_elemento_por_texto_com_fallback(driver, "41 - Paraná", nome_tag="td")
+        # Clica no estado configurado
+        print(f"[INFO] Clicando no estado {config_municipio_estado.estado}...", flush=True)
+        clicar_elemento_por_texto_com_fallback(driver, config_municipio_estado.estado, nome_tag="td")
 
-        # Aguarda o elemento da cidade Maringá
+        # Aguarda o elemento da cidade configurada
         util_selenium.aguardar_elemento_por_texto(
-            driver, "411520000 - Maringá", nome_tag="td", tempo_espera=20
+            driver, config_municipio_estado.municipio, nome_tag="td", tempo_espera=20
         )
         time.sleep(1)
-        print("[INFO] Clicando na cidade Maringá...", flush=True)
+        print(f"[INFO] Clicando na cidade {config_municipio_estado.municipio}...", flush=True)
         util_selenium.clicar_elemento_por_texto_com_fallback(
-            driver, "411520000 - Maringá", nome_tag="td", tempo_espera=5
+            driver, config_municipio_estado.municipio, nome_tag="td", tempo_espera=5
         )
 
         # Aguarda o botão de exportação para CSV aparecer na tela

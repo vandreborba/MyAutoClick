@@ -45,21 +45,7 @@ def inicializar_webdriver_com_perfil():
     opcoes.add_argument('--disable-software-rasterizer')
     opcoes.add_argument('--disable-dev-shm-usage')
 
-    # Força o encerramento de todos os processos do Chrome e relacionados
-    processos_encerrar = ['chrome.exe', 'GoogleCrashHandler.exe', 'GoogleUpdate.exe']
-    while True:
-        processos_ativos = [p for p in psutil.process_iter(['name']) if p.info['name'] in processos_encerrar]
-        if processos_ativos:
-            print("[ATENÇÃO] Para continuar, feche TODAS as janelas do Google Chrome e finalize processos em segundo plano.")
-            for proc in processos_ativos:
-                try:
-                    print(f"[INFO] Encerrando processo: {proc.info['name']} (PID: {proc.pid})")
-                    proc.terminate()
-                except Exception as e:
-                    print(f"[ERRO] Não foi possível encerrar {proc.info['name']}: {e}")
-            input("Após fechar/encerrar, pressione Enter para continuar...")
-        else:
-            break
+    # Comentário: Não é mais necessário fechar o navegador Chrome aberto, pois o Selenium utiliza um perfil exclusivo de automação.
     print(f"[INFO] Iniciando o WebDriver com o perfil de automação em: {caminho_perfil_automacao}")
     driver = webdriver.Chrome(options=opcoes)
     print(f"[SUCESSO] WebDriver iniciado com o perfil de automação.")
