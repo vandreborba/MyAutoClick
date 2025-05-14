@@ -44,6 +44,11 @@ def inicializar_webdriver_com_perfil():
     opcoes.add_argument('--disable-gpu')
     opcoes.add_argument('--disable-software-rasterizer')
     opcoes.add_argument('--disable-dev-shm-usage')
+    # Configuração para que o Chrome baixe PDFs sem abrir automaticamente
+    prefs = {
+        "plugins.always_open_pdf_externally": True
+    }
+    opcoes.add_experimental_option("prefs", prefs)
 
     # Comentário: Não é mais necessário fechar o navegador Chrome aberto, pois o Selenium utiliza um perfil exclusivo de automação.
     print(f"[INFO] Iniciando o WebDriver com o perfil de automação em: {caminho_perfil_automacao}")
@@ -173,16 +178,17 @@ def clicar_elemento_com_fallback(driver, seletor):
                 print(f"[ERRO] Não foi possível salvar o screenshot: {erro_print}")
             return False
 
-def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_espera=10):
+def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_espera=10, reiniciar_ao_falhar=True):
     """
     Tenta clicar em um elemento pelo texto, rolando até ele e usando fallback via JavaScript.
-    Caso ocorra erro, atualiza a página e tenta novamente uma vez.
+    Caso ocorra erro, pode atualizar a página e tentar novamente uma vez, dependendo do parâmetro reiniciar_ao_falhar.
     
     Parâmetros:
         driver: Instância do WebDriver.
         texto: Texto do elemento a ser clicado.
         nome_tag: Tag HTML do elemento (ex: 'td', 'button'). Use '*' para qualquer tag.
         tempo_espera: Tempo máximo de espera em segundos.
+        reiniciar_ao_falhar: Se True, reinicia a página e tenta novamente ao falhar. Se False, não reinicia.
     
     Retorno:
         bool: True se o clique foi realizado, False caso contrário.
@@ -190,6 +196,7 @@ def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_es
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
+    import time
 
     def tentar_clicar():
         print(f"[INFO] Buscando elemento com texto '{texto}' e tag '{nome_tag}'...")
@@ -203,15 +210,24 @@ def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_es
             # Rola até o elemento para garantir visibilidade
             driver.execute_script("arguments[0].scrollIntoView(true);", elemento)
             print("[INFO] Rolando até o elemento antes do clique.")
+            time.sleep(0.2)  # Aguarda a rolagem concluir
+            # Verifica se o elemento está visível e não coberto
+            if not elemento.is_displayed():
+                print(f"[ERRO] Elemento com texto '{texto}' não está visível na tela.")
+                return False
             try:
                 elemento.click()
                 print(f"[SUCESSO] Clique realizado normalmente no elemento '{texto}'.")
                 return True
             except Exception as erro_click:
                 print(f"[ERRO] Clique normal falhou: {erro_click}. Tentando via JavaScript...")
-                driver.execute_script("arguments[0].click();", elemento)
-                print(f"[SUCESSO] Clique realizado via JavaScript no elemento '{texto}'.")
-                return True
+                try:
+                    driver.execute_script("arguments[0].click();", elemento)
+                    print(f"[SUCESSO] Clique realizado via JavaScript no elemento '{texto}'.")
+                    return True
+                except Exception as erro_js:
+                    print(f"[ERRO] Clique via JavaScript também falhou: {erro_js}")
+                    return False
         except Exception as erro:
             print(f"[ERRO] Não foi possível clicar no elemento com texto '{texto}': {erro}")
             try:
@@ -226,17 +242,21 @@ def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_es
     if tentar_clicar():
         return True
     else:
-        print("[INFO] Atualizando a página e tentando novamente...")
-        driver.refresh()
-        # Opcional: aguarda a página recarregar completamente
-        try:
-            WebDriverWait(driver, tempo_espera).until(
-                lambda d: d.execute_script('return document.readyState') == 'complete'
-            )
-        except Exception as erro_espera:
-            print(f"[ERRO] Timeout ao aguardar recarregamento da página: {erro_espera}")
-        # Segunda tentativa de clique
-        return tentar_clicar()
+        if reiniciar_ao_falhar:
+            print("[INFO] Atualizando a página e tentando novamente...")
+            driver.refresh()
+            # Aguarda a página recarregar completamente
+            try:
+                WebDriverWait(driver, tempo_espera).until(
+                    lambda d: d.execute_script('return document.readyState') == 'complete'
+                )
+            except Exception as erro_espera:
+                print(f"[ERRO] Timeout ao aguardar recarregamento da página: {erro_espera}")
+            # Segunda tentativa de clique
+            return tentar_clicar()
+        else:
+            print("[INFO] Não irá reiniciar a página após falha, conforme parâmetro reiniciar_ao_falhar=False.")
+            return False
 
 def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
     """
@@ -318,7 +338,7 @@ def passar_mouse_sobre_elemento_por_texto(driver, texto, nome_tag='*', tempo_esp
 def selecionar_dropdown_por_label(driver, texto_label, valor):
     """
     Seleciona um valor em um dropdown (<select>) a partir do texto do label associado.
-
+    Tenta primeiro selecionar pelo value, depois pelo texto visível se necessário.
     Parâmetros:
         driver: Instância do WebDriver.
         texto_label: Texto exato do label (ex: 'Ano').
@@ -326,6 +346,7 @@ def selecionar_dropdown_por_label(driver, texto_label, valor):
     """
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support.ui import Select
+    import time
 
     try:
         # Localiza o label pelo texto
@@ -338,15 +359,22 @@ def selecionar_dropdown_por_label(driver, texto_label, valor):
         select_element = driver.find_element(By.ID, id_select)
         select = Select(select_element)
         try:
-            # Tenta selecionar o valor desejado
+            # Tenta selecionar o valor desejado pelo value
             select.select_by_value(str(valor))
-            print(f"[INFO] Valor '{valor}' selecionado no dropdown '{texto_label}'.")
+            print(f"[INFO] Valor '{valor}' selecionado no dropdown '{texto_label}' (por value).")
             return True
         except Exception as erro_selecao:
-            # Se não conseguir selecionar, lista as opções disponíveis
-            opcoes_disponiveis = [opcao.get_attribute('value') for opcao in select.options]
-            print(f"[ERRO] Valor '{valor}' não encontrado no dropdown '{texto_label}'. Opções disponíveis: {opcoes_disponiveis}")
-            return False
+            print(f"[WARN] Não foi possível selecionar por value: {erro_selecao}. Tentando por texto visível...")
+            try:
+                # Tenta selecionar pelo texto visível
+                select.select_by_visible_text(str(valor))
+                print(f"[INFO] Valor '{valor}' selecionado no dropdown '{texto_label}' (por texto visível).")
+                return True
+            except Exception as erro_texto:
+                # Se não conseguir selecionar, lista as opções disponíveis
+                opcoes_disponiveis = [opcao.get_attribute('value') for opcao in select.options]
+                print(f"[ERRO] Valor '{valor}' não encontrado no dropdown '{texto_label}'. Opções disponíveis: {opcoes_disponiveis}")
+                return False
     except Exception as erro:
         # Erro ao localizar o label ou o select
         print(f"[ERRO] Não foi possível localizar o dropdown associado ao label '{texto_label}': {erro}")
@@ -418,3 +446,49 @@ def verificar_texto_presente_na_pagina(driver, texto, tempo_espera=5):
         time.sleep(0.5)
     print(f"[INFO] Texto '{texto}' NÃO encontrado na página após {tempo_espera} segundos.")
     return False
+
+def selecionar_select2_por_label(driver, texto_label, valor, tempo_espera=10):
+    """
+    Seleciona um valor em um dropdown Select2 a partir do texto do label associado.
+    Parâmetros:
+        driver: Instância do WebDriver.
+        texto_label: Texto exato do label (ex: 'Ano').
+        valor: Valor/texto a ser selecionado no dropdown.
+        tempo_espera: Tempo máximo de espera em segundos.
+    Retorno:
+        bool: True se o valor foi selecionado com sucesso, False caso contrário.
+    """
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+
+    try:
+        # Localiza o label e o id do select associado
+        label = driver.find_element(By.XPATH, f"//label[normalize-space(text())='{texto_label}']")
+        id_select = label.get_attribute("for")
+        if not id_select:
+            print(f"[ERRO] Label '{texto_label}' não possui atributo 'for'.")
+            return False
+
+        # Clica no container do Select2 para abrir as opções
+        seletor_container = f"//span[@aria-labelledby='select2-{id_select}-container']"
+        select2_container = driver.find_element(By.XPATH, seletor_container)
+        select2_container.click()
+
+        # Aguarda o campo de busca do Select2 aparecer
+        campo_busca = WebDriverWait(driver, tempo_espera).until(
+            EC.visibility_of_element_located((By.XPATH, "//input[contains(@class, 'select2-search__field')]"))
+        )
+        campo_busca.clear()
+        campo_busca.send_keys(valor)
+
+        # Aguarda e clica na opção desejada
+        opcao = WebDriverWait(driver, tempo_espera).until(
+            EC.element_to_be_clickable((By.XPATH, f"//li[contains(@class, 'select2-results__option') and contains(text(), '{valor}')]"))
+        )
+        opcao.click()
+        print(f"[SUCESSO] Valor '{valor}' selecionado no Select2 '{texto_label}'.")
+        return True
+    except Exception as erro:
+        print(f"[ERRO] Não foi possível selecionar '{valor}' no Select2 '{texto_label}': {erro}")
+        return False

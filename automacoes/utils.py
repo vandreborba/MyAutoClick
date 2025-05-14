@@ -198,3 +198,52 @@ def pressionar_tab(vezes):
     for _ in range(vezes):
         pyautogui.press('tab')
     print(f"Tecla TAB pressionada {vezes} vezes.")
+
+def copiar_ultimo_pdf_baixado(info):
+    """
+    Copia o arquivo PDF baixado mais recente na pasta de downloads do usuário para o novo nome,
+    usando as informações coletadas da entrevista. O arquivo original é mantido.
+
+    Usado no baixarQuestionario.py... 
+    """
+    import os
+    import time
+    import glob
+    import re
+    import shutil
+
+    # Caminho da pasta de downloads do usuário
+    pasta_downloads = os.path.expanduser("~\\Downloads")
+    if not os.path.exists(pasta_downloads):
+        print(f"[ERRO] Pasta de downloads não encontrada: {pasta_downloads}")
+        return
+
+    # Aguarda o arquivo PDF aparecer e o download terminar (não pode ter .crdownload)
+    timeout = 30  # segundos
+    tempo_inicial = time.time()
+    arquivo_pdf = None
+    while time.time() - tempo_inicial < timeout:
+        arquivos = glob.glob(os.path.join(pasta_downloads, '*.pdf'))
+        if arquivos:
+            # Pega o PDF mais recente
+            arquivo_pdf = max(arquivos, key=os.path.getctime)
+            # Verifica se não existe o .crdownload correspondente
+            if not os.path.exists(arquivo_pdf + '.crdownload'):
+                break
+        time.sleep(1)
+    if not arquivo_pdf:
+        print('[ERRO] Nenhum arquivo PDF encontrado para copiar.')
+        return
+
+    # Monta o novo nome do arquivo
+    def limpar_nome(texto):
+        # Remove caracteres inválidos para nome de arquivo
+        return re.sub(r'[^a-zA-Z0-9_-]+', '_', str(texto))
+    novo_nome = f"questionario_{limpar_nome(info.get('ano',''))}_{limpar_nome(info.get('mes',''))}_{limpar_nome(info.get('semana',''))}_{limpar_nome(info.get('controle',''))}_{limpar_nome(info.get('domicilio',''))}_{limpar_nome(info.get('morador',''))}.pdf"
+    novo_caminho = os.path.join(pasta_downloads, novo_nome)
+
+    try:
+        shutil.copy2(arquivo_pdf, novo_caminho)
+        print(f"[SUCESSO] Arquivo PDF copiado para: {novo_nome}")
+    except Exception as erro:
+        print(f"[ERRO] Não foi possível copiar o arquivo PDF: {erro}")

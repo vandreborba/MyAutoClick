@@ -1,8 +1,0 @@
-Ativar o ambiente:
-.venv\Scripts\activate
-
-desativar:
-deactivate
-
-Criar o requirements:
-pip freeze > requirements.txt

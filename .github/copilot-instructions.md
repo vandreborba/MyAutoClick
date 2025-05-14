@@ -20,6 +20,6 @@
 
 # Para compilar o projeto e gerar um único arquivo .exe na área de trabalho, execute:
 #
-# pyinstaller --onefile --distpath "%USERPROFILE%\Desktop" --name MyAutoClicker main.py 
+# pyinstaller --onefile --distpath "%USERPROFILE%\Desktop" --name "My IBGE AutoClicker" --icon="icon.ico" main.py
 #
-# Utilize este comando sempre que solicitar a compilação do projeto.
+# Utilize este comando sempre que solicitar a compilação do projeto com ícone personalizado.

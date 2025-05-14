@@ -47,9 +47,12 @@ def executar_sequencia_portal(url_portal, nome_portal):
         aguardar_elemento(driver, (By.ID, "ContentPlaceHolder1_quadroColetaUF"), 10)
         time.sleep(2)
 
-        # Clica no estado configurado
+        # Clica no estado configurado (correspondência parcial, ex: apenas 'Paraná')
         print(f"[INFO] Clicando no estado {config_municipio_estado.estado}...", flush=True)
-        clicar_elemento_por_texto_com_fallback(driver, config_municipio_estado.estado, nome_tag="td")
+        # Passa o mouse sobre o elemento antes do clique (simula hover, se necessário)
+        util_selenium.passar_mouse_sobre_elemento_por_texto(driver, config_municipio_estado.estado, nome_tag="td", tempo_espera=10)
+        # Tenta clicar normalmente, via JS e dispara manualmente o evento onclick, se existir
+        util_selenium.clicar_elemento_por_texto_com_fallback(driver, config_municipio_estado.estado, nome_tag="td", tempo_espera=10)
 
         # Aguarda o elemento da cidade configurada
         util_selenium.aguardar_elemento_por_texto(
@@ -63,7 +66,7 @@ def executar_sequencia_portal(url_portal, nome_portal):
 
         # Aguarda o botão de exportação para CSV aparecer na tela
         botao_exportar = util_selenium.aguardar_elemento(driver, (By.ID, "ContentPlaceHolder1_btnExportarCSV"), 30)
-        if botao_exportar:
+        if (botao_exportar):
             print("[INFO] Botão de exportação para CSV encontrado. Realizando clique...", flush=True)
             botao_exportar.click()
             print("[INFO] Clique realizado no botão de exportação para CSV. Aguarde o download...", flush=True)

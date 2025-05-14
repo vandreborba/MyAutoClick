@@ -34,6 +34,28 @@ def solicitar_mes_ano():
     except Exception:
         print("[ERRO] Entrada inválida! Use o formato M-AAAA, por exemplo: 5-2025")
         return None, None
+def clicar_todos_botoes_bloqueado(driver):
+    """
+    Clica em todos os botões de 'Bloqueado' na página para liberar a codificação dos domicílios.
+    Busca todos os elementos <label> com a classe 'btn-danger' e texto 'Bloqueado' e clica neles.
+    Parâmetros:
+        driver: Instância do WebDriver.
+    """
+    from selenium.webdriver.common.by import By
+    import time
+    # Busca todos os elementos <label> com a classe 'btn-danger' e texto 'Bloqueado'
+    botoes_bloqueado = driver.find_elements(By.XPATH, "//label[contains(@class, 'btn-danger') and contains(text(), 'Bloqueado')]")
+    print(f"[INFO] Encontrados {len(botoes_bloqueado)} botões 'Bloqueado' para liberar.")
+    for indice, botao in enumerate(botoes_bloqueado, start=1):
+        try:
+            # Rola até o botão para garantir visibilidade
+            driver.execute_script("arguments[0].scrollIntoView(true);", botao)
+            botao.click()
+            print(f"[SUCESSO] Botão 'Bloqueado' {indice} liberado com sucesso.")
+            # Pequena pausa para evitar problemas de sincronização
+            time.sleep(0.5)
+        except Exception as erro:
+            print(f"[ERRO] Não foi possível clicar no botão 'Bloqueado' {indice}: {erro}")
 
 def sequencia_portal(mes, ano):
     global driver
@@ -79,17 +101,17 @@ def sequencia_portal(mes, ano):
             time.sleep(1)
 
             continue
-        else:
-            # por enquanto nada... só pausa mesmo:
-            input("Pausado")
-        # se tiver, tem que apertar os botões para liberar referente aos domicílios, (Não dá para fazer agora pq não tem nenhum para vermos como ficaria.)
+        else:            
+            # Função para clicar em todos os botões "Bloqueado" e liberar os domicílios
+            clicar_todos_botoes_bloqueado(driver)
+            # Após liberar, clicar no botão de submit para efetivar as liberações
+            util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btnSubmit"))
+            # Aparece uma mensagem de confirmação após o carregamento, clicar em "OK"                                         
+            util_selenium.clicar_elemento_com_fallback(driver, (By.CSS_SELECTOR, "button.bootbox-accept.btn-success"))
+            time.sleep(1)
 
         # Depois que percorreu tudo do setor, tem que clicar em Expandir Filtro, para aparecer o menu novamente:        
                 
-
-        
-        
-    
 
 
 
@@ -98,13 +120,13 @@ def executar():
     print("Iniciando automação para liberar codificação...")
 
     # Solicita o mês e o ano antes de iniciar o WebDriver
-    mes, ano = solicitar_mes_ano()
+    mes, ano = solicitar_mes_ano()    
     if not mes or not ano:
         return
-
+    
     driver = util_selenium.inicializar_webdriver_com_perfil()
     sequencia_portal(mes, ano)
 
     # Terminou:
-    driver.quit()
+    # driver.quit()
     print("Automação concluída.")
