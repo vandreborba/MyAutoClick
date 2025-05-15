@@ -18,17 +18,25 @@ def obter_arquivo_relatorio_mais_recente(pasta_downloads=None, timeout=30, aguar
     arquivo_encontrado = None
     while time.time() - tempo_inicial < timeout:
         arquivos = glob.glob(padrao)
-        arquivos = [a for a in arquivos if not a.endswith('.crdownload')]
-        if arquivos:
+        # Remove arquivos temporários de download
+        arquivos_validos = [a for a in arquivos if not a.endswith('.crdownload') and os.path.exists(a)]
+        if arquivos_validos:
             # Seleciona o arquivo mais recente
-            arquivo_encontrado = max(arquivos, key=os.path.getctime)
-            break
+            arquivo_encontrado = max(arquivos_validos, key=os.path.getctime)
+            # Se for para aguardar download, verifica se não existe o .crdownload correspondente
+            if aguardar_download:
+                if not os.path.exists(arquivo_encontrado + '.crdownload'):
+                    break
+                else:
+                    print(f"[INFO] Aguardando download finalizar: {arquivo_encontrado}.crdownload")
+            else:
+                break
+        else:
+            print("[INFO] Nenhum arquivo de relatório encontrado ainda. Aguardando...")
         time.sleep(1)  # Aguarda 1 segundo antes de tentar novamente
-    if aguardar_download and arquivo_encontrado:
-        # Aguarda o arquivo sumir da lista de .crdownload
-        while os.path.exists(arquivo_encontrado + '.crdownload'):
-            print(f"[INFO] Aguardando download finalizar: {arquivo_encontrado}.crdownload")
-            time.sleep(1)
+    if not arquivo_encontrado or not os.path.exists(arquivo_encontrado):
+        print("[ERRO] Arquivo de relatório não encontrado ou não disponível para leitura.")
+        return None
     return arquivo_encontrado
 
 def processar_dados(dados, siapes):
@@ -90,12 +98,17 @@ def processar_dados(dados, siapes):
 def filtrar(lista_siapes):
     """
     Lê o arquivo de relatório mais recente baixado e executa o filtro desejado.
+    Garante que o download do arquivo esteja completo antes de processar.
     """
     # Obtém o arquivo mais recente de relatório
     caminho_arquivo = obter_arquivo_relatorio_mais_recente()
     if not caminho_arquivo:
         print("[ERRO] Arquivo de relatório não encontrado na pasta Downloads.")
         return
+    # Aguarda o término do download caso ainda exista o arquivo .crdownload
+    while os.path.exists(caminho_arquivo + '.crdownload'):
+        print(f"[INFO] Aguardando download finalizar: {caminho_arquivo}.crdownload")
+        time.sleep(1)
     print(f"[INFO] Lendo arquivo: {caminho_arquivo}")
     dados = pd.read_excel(caminho_arquivo, None)
     processar_dados(dados, lista_siapes)

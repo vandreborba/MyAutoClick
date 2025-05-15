@@ -5,6 +5,12 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import os
 import psutil
+from automacoes.log_util import obter_logger
+
+logger = obter_logger(__name__)
+
+# Constante para controlar exibição dos logs do Chromedriver/Chrome
+EXIBIR_LOGS_CHROMEDRIVER = False  # Altere para True para ver logs do driver no console
 
 def testar_webdriver():
     driver = inicializar_webdriver()
@@ -32,6 +38,7 @@ def inicializar_webdriver_com_perfil():
     Retorna:
         WebDriver: Instância do WebDriver configurada com o perfil de automação.
     """
+    from selenium.webdriver.chrome.service import Service
     opcoes = Options()
     # Diretório exclusivo para automação (não usar o padrão do usuário)
     caminho_perfil_automacao = os.path.abspath('./chrome_temp_profile')
@@ -41,19 +48,26 @@ def inicializar_webdriver_com_perfil():
     opcoes.add_argument("--profile-directory=Default")
     opcoes.add_argument('--disable-extensions')
     opcoes.add_argument('--no-sandbox')    
-    opcoes.add_argument('--disable-gpu')
-    opcoes.add_argument('--disable-software-rasterizer')
-    opcoes.add_argument('--disable-dev-shm-usage')
+    #opcoes.add_argument('--disable-gpu')
+    #opcoes.add_argument('--disable-software-rasterizer')
+    #opcoes.add_argument('--disable-dev-shm-usage')
+    if not EXIBIR_LOGS_CHROMEDRIVER:
+        opcoes.add_argument('--log-level=4')  # Minimiza logs do Chrome
     # Configuração para que o Chrome baixe PDFs sem abrir automaticamente
     prefs = {
         "plugins.always_open_pdf_externally": True
     }
     opcoes.add_experimental_option("prefs", prefs)
 
-    # Comentário: Não é mais necessário fechar o navegador Chrome aberto, pois o Selenium utiliza um perfil exclusivo de automação.
-    print(f"[INFO] Iniciando o WebDriver com o perfil de automação em: {caminho_perfil_automacao}")
-    driver = webdriver.Chrome(options=opcoes)
-    print(f"[SUCESSO] WebDriver iniciado com o perfil de automação.")
+    # Suprime logs do Chromedriver se a constante estiver False
+    if EXIBIR_LOGS_CHROMEDRIVER:
+        servico = Service()
+    else:
+        servico = Service(log_path=os.devnull)
+
+    logger.info(f"Iniciando o WebDriver com o perfil de automação em: {caminho_perfil_automacao}")
+    driver = webdriver.Chrome(options=opcoes, service=servico)
+    logger.info(f"WebDriver iniciado com o perfil de automação.")
     return driver
 
 # Função para aguardar um elemento estar presente na página
@@ -72,7 +86,7 @@ def aguardar_elemento(driver, seletor, tempo=10):
     try:
         return WebDriverWait(driver, tempo).until(EC.presence_of_element_located(seletor))
     except Exception as erro:
-        print(f"[ERRO] Elemento com seletor {seletor} não foi encontrado dentro do tempo limite: {erro}")
+        logger.error(f"Elemento com seletor {seletor} não foi encontrado dentro do tempo limite: {erro}")
         return None
 
 # Função para clicar em um elemento
@@ -118,28 +132,28 @@ def clicar_elemento_por_texto(driver, texto, tag_nome='*', tempo=10):
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
 
-    print(f"[INFO] Buscando elemento com texto '{texto}' e tag '{tag_nome}'...")
+    logger.info(f"Buscando elemento com texto '{texto}' e tag '{tag_nome}'...")
     try:
         # Monta o XPath para buscar o elemento pelo texto
         xpath = f"//{tag_nome}[contains(normalize-space(text()), '{texto}') or contains(@value, '{texto}') or contains(@aria-label, '{texto}') or contains(@title, '{texto}') ]"
-        print(f"[DEBUG] XPath utilizado: {xpath}")
+        logger.debug(f"XPath utilizado: {xpath}")
         elemento = WebDriverWait(driver, tempo).until(
             EC.element_to_be_clickable((By.XPATH, xpath))
         )
-        print(f"[SUCESSO] Elemento encontrado. Realizando clique...")
+        logger.info(f"Elemento encontrado. Realizando clique...")
         elemento.click()
-        print(f"[SUCESSO] Clique realizado no elemento com texto '{texto}'.")
+        logger.info(f"Clique realizado no elemento com texto '{texto}'.")
         return True
     except Exception as erro:
         # Comentário: Exibe mensagem de erro caso não encontre ou não consiga clicar
-        print(f"[ERRO] Não foi possível clicar no elemento com texto '{texto}': {erro}")
+        logger.error(f"Não foi possível clicar no elemento com texto '{texto}': {erro}")
         try:
             # Tira um print da tela para facilitar a depuração
             caminho_print = f"screenshot_erro_{texto.replace(' ', '_')}.png"
             driver.save_screenshot(caminho_print)
-            print(f"[INFO] Screenshot salvo em: {caminho_print}")
+            logger.info(f"Screenshot salvo em: {caminho_print}")
         except Exception as erro_print:
-            print(f"[ERRO] Não foi possível salvar o screenshot: {erro_print}")
+            logger.error(f"Não foi possível salvar o screenshot: {erro_print}")
         return False
 
 def clicar_elemento_com_fallback(driver, seletor):
@@ -156,26 +170,26 @@ def clicar_elemento_com_fallback(driver, seletor):
     try:
         # Aguarda o elemento estar presente e visível na página
         elemento = aguardar_elemento(driver, seletor)
-        print(f"[INFO] Tentando clicar normalmente no elemento com seletor: {seletor}")
+        logger.info(f"Tentando clicar normalmente no elemento com seletor: {seletor}")
         elemento.click()
-        print("[SUCESSO] Clique realizado normalmente.")
+        logger.info("Clique realizado normalmente.")
         return True
     except Exception as erro:
-        print(f"[ERRO] Clique normal falhou: {erro}. Tentando via JavaScript...")
+        logger.error(f"Clique normal falhou: {erro}. Tentando via JavaScript...")
         try:
             # Tenta clicar usando JavaScript
             driver.execute_script("arguments[0].click();", elemento)
-            print("[SUCESSO] Clique realizado via JavaScript.")
+            logger.info("Clique realizado via JavaScript.")
             return True
         except Exception as erro_js:
-            print(f"[ERRO] Não foi possível clicar nem via JavaScript: {erro_js}")
+            logger.error(f"Não foi possível clicar nem via JavaScript: {erro_js}")
             try:
                 # Tira um print da tela para facilitar a depuração
                 caminho_print = f"screenshot_erro_click_{seletor[1].replace(' ', '_')}.png"
                 driver.save_screenshot(caminho_print)
-                print(f"[INFO] Screenshot salvo em: {caminho_print}")
+                logger.info(f"Screenshot salvo em: {caminho_print}")
             except Exception as erro_print:
-                print(f"[ERRO] Não foi possível salvar o screenshot: {erro_print}")
+                logger.error(f"Não foi possível salvar o screenshot: {erro_print}")
             return False
 
 def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_espera=10, reiniciar_ao_falhar=True):
@@ -199,43 +213,43 @@ def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_es
     import time
 
     def tentar_clicar():
-        print(f"[INFO] Buscando elemento com texto '{texto}' e tag '{nome_tag}'...")
+        logger.info(f"Buscando elemento com texto '{texto}' e tag '{nome_tag}'...")
         try:
             # Monta o XPath para buscar o elemento pelo texto
             xpath = f"//{nome_tag}[contains(normalize-space(text()), '{texto}')]"
-            print(f"[DEBUG] XPath utilizado: {xpath}")
+            logger.debug(f"XPath utilizado: {xpath}")
             elemento = WebDriverWait(driver, tempo_espera).until(
                 EC.element_to_be_clickable((By.XPATH, xpath))
             )
             # Rola até o elemento para garantir visibilidade
             driver.execute_script("arguments[0].scrollIntoView(true);", elemento)
-            print("[INFO] Rolando até o elemento antes do clique.")
+            logger.info("Rolando até o elemento antes do clique.")
             time.sleep(0.2)  # Aguarda a rolagem concluir
             # Verifica se o elemento está visível e não coberto
             if not elemento.is_displayed():
-                print(f"[ERRO] Elemento com texto '{texto}' não está visível na tela.")
+                logger.error(f"Elemento com texto '{texto}' não está visível na tela.")
                 return False
             try:
                 elemento.click()
-                print(f"[SUCESSO] Clique realizado normalmente no elemento '{texto}'.")
+                logger.info(f"Clique realizado normalmente no elemento '{texto}'.")
                 return True
             except Exception as erro_click:
-                print(f"[ERRO] Clique normal falhou: {erro_click}. Tentando via JavaScript...")
+                logger.error(f"Clique normal falhou: {erro_click}. Tentando via JavaScript...")
                 try:
                     driver.execute_script("arguments[0].click();", elemento)
-                    print(f"[SUCESSO] Clique realizado via JavaScript no elemento '{texto}'.")
+                    logger.info(f"Clique realizado via JavaScript no elemento '{texto}'.")
                     return True
                 except Exception as erro_js:
-                    print(f"[ERRO] Clique via JavaScript também falhou: {erro_js}")
+                    logger.error(f"Clique via JavaScript também falhou: {erro_js}")
                     return False
         except Exception as erro:
-            print(f"[ERRO] Não foi possível clicar no elemento com texto '{texto}': {erro}")
+            logger.error(f"Não foi possível clicar no elemento com texto '{texto}': {erro}")
             try:
                 caminho_print = f"screenshot_erro_{texto.replace(' ', '_')}.png"
                 driver.save_screenshot(caminho_print)
-                print(f"[INFO] Screenshot salvo em: {caminho_print}")
+                logger.info(f"Screenshot salvo em: {caminho_print}")
             except Exception as erro_print:
-                print(f"[ERRO] Não foi possível salvar o screenshot: {erro_print}")
+                logger.error(f"Não foi possível salvar o screenshot: {erro_print}")
             return False
 
     # Primeira tentativa de clique
@@ -243,7 +257,7 @@ def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_es
         return True
     else:
         if reiniciar_ao_falhar:
-            print("[INFO] Atualizando a página e tentando novamente...")
+            logger.info("Atualizando a página e tentando novamente...")
             driver.refresh()
             # Aguarda a página recarregar completamente
             try:
@@ -251,11 +265,11 @@ def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_es
                     lambda d: d.execute_script('return document.readyState') == 'complete'
                 )
             except Exception as erro_espera:
-                print(f"[ERRO] Timeout ao aguardar recarregamento da página: {erro_espera}")
+                logger.error(f"Timeout ao aguardar recarregamento da página: {erro_espera}")
             # Segunda tentativa de clique
             return tentar_clicar()
         else:
-            print("[INFO] Não irá reiniciar a página após falha, conforme parâmetro reiniciar_ao_falhar=False.")
+            logger.info("Não irá reiniciar a página após falha, conforme parâmetro reiniciar_ao_falhar=False.")
             return False
 
 def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
@@ -275,20 +289,20 @@ def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
 
-    print(f"[INFO] Aguardando elemento com texto '{texto}' e tag '{nome_tag}'...")
+    logger.info(f"Aguardando elemento com texto '{texto}' e tag '{nome_tag}'...")
     try:
         # Monta o XPath para buscar o elemento pelo texto
         xpath = f"//{nome_tag}[contains(normalize-space(text()), '{texto}')]"
-        print(f"[DEBUG] XPath utilizado para aguardar: {xpath}")
+        logger.debug(f"XPath utilizado para aguardar: {xpath}")
         elemento = WebDriverWait(driver, tempo_espera).until(
             EC.visibility_of_element_located((By.XPATH, xpath))
         )
-        print(f"[SUCESSO] Elemento com texto '{texto}' encontrado e visível.")
+        logger.info(f"Elemento com texto '{texto}' encontrado e visível.")
         return elemento
     except Exception as erro:
         # Mensagem de erro personalizada para timeout
-        print("""
-[ERRO] Timeout ao aguardar o elemento com texto '{0}' e tag '{1}'.
+        logger.error("""
+Timeout ao aguardar o elemento com texto '{0}' e tag '{1}'.
 Verifique se o elemento realmente existe na página, se o texto está correto ou se há algum problema de carregamento.
 Tempo de espera excedido ({2} segundos).
 Detalhes do erro: {3}
@@ -296,9 +310,9 @@ Detalhes do erro: {3}
         try:
             caminho_print = f"screenshot_erro_aguardar_{texto.replace(' ', '_')}.png"
             driver.save_screenshot(caminho_print)
-            print(f"[INFO] Screenshot salvo em: {caminho_print}")
+            logger.info(f"Screenshot salvo em: {caminho_print}")
         except Exception as erro_print:
-            print(f"[ERRO] Não foi possível salvar o screenshot: {erro_print}")
+            logger.error(f"Não foi possível salvar o screenshot: {erro_print}")
         return None
 
 def alternar_para_ultima_aba(driver):
@@ -311,7 +325,7 @@ def alternar_para_ultima_aba(driver):
     # Comentário: Obtém a lista de handles e alterna para o último
     handles = driver.window_handles
     driver.switch_to.window(handles[-1])
-    print("[INFO] Alternado para a última aba/janela do navegador.")
+    logger.info("Alternado para a última aba/janela do navegador.")
 
 def passar_mouse_sobre_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
     """
@@ -331,7 +345,7 @@ def passar_mouse_sobre_elemento_por_texto(driver, texto, nome_tag='*', tempo_esp
     from selenium.webdriver.support import expected_conditions as EC
     import time
 
-    print(f"[INFO] Procurando elemento para hover: '{texto}' (tag: {nome_tag})")
+    logger.info(f"Procurando elemento para hover: '{texto}' (tag: {nome_tag})")
     xpath = f"//{nome_tag}[contains(normalize-space(text()), '{texto}')]"
     try:
         elemento = WebDriverWait(driver, tempo_espera).until(
@@ -342,7 +356,7 @@ def passar_mouse_sobre_elemento_por_texto(driver, texto, nome_tag='*', tempo_esp
         time.sleep(0.2)
         # Primeiro tenta o hover padrão
         ActionChains(driver).move_to_element(elemento).perform()
-        print(f"[INFO] Mouse passado sobre o elemento '{texto}' via ActionChains.")
+        logger.info(f"Mouse passado sobre o elemento '{texto}' via ActionChains.")
         time.sleep(0.2)
         # Verifica se um submenu ficou visível (heurística: procura por submenus abertos próximos)
         submenu_visivel = False
@@ -353,10 +367,10 @@ def passar_mouse_sobre_elemento_por_texto(driver, texto, nome_tag='*', tempo_esp
         except Exception:
             pass
         if submenu_visivel:
-            print(f"[INFO] Submenu detectado após hover padrão.")
+            logger.info(f"Submenu detectado após hover padrão.")
             return True
         # Se não funcionou, tenta disparar eventos via JavaScript
-        print(f"[WARN] Hover padrão não abriu submenu. Tentando disparar eventos JavaScript...")
+        logger.warning(f"Hover padrão não abriu submenu. Tentando disparar eventos JavaScript...")
         driver.execute_script("var evObj = document.createEvent('MouseEvents'); evObj.initEvent('mouseover', true, false); arguments[0].dispatchEvent(evObj);", elemento)
         driver.execute_script("var evObj = document.createEvent('MouseEvents'); evObj.initEvent('mouseenter', true, false); arguments[0].dispatchEvent(evObj);", elemento)
         time.sleep(0.3)
@@ -364,14 +378,14 @@ def passar_mouse_sobre_elemento_por_texto(driver, texto, nome_tag='*', tempo_esp
         try:
             submenu = elemento.find_element(By.XPATH, "./following-sibling::*[contains(@class, 'open') or contains(@class, 'show')]")
             if submenu.is_displayed():
-                print(f"[INFO] Submenu detectado após eventos JS.")
+                logger.info(f"Submenu detectado após eventos JS.")
                 return True
         except Exception:
             pass
-        print(f"[ERRO] Não foi possível exibir o submenu para o elemento '{texto}'.")
+        logger.error(f"Não foi possível exibir o submenu para o elemento '{texto}'.")
         return False
     except Exception as erro:
-        print(f"[ERRO] Erro ao tentar passar mouse sobre elemento '{texto}': {erro}")
+        logger.error(f"Erro ao tentar passar mouse sobre elemento '{texto}': {erro}")
         return False
 
 def selecionar_dropdown_por_label(driver, texto_label, valor):
@@ -392,7 +406,7 @@ def selecionar_dropdown_por_label(driver, texto_label, valor):
         label = driver.find_element(By.XPATH, f"//label[normalize-space(text())='{texto_label}']")
         id_select = label.get_attribute("for")
         if not id_select:
-            print(f"[ERRO] Label '{texto_label}' não possui atributo 'for'.")
+            logger.error(f"Label '{texto_label}' não possui atributo 'for'.")
             return False
         # Localiza o select pelo id
         select_element = driver.find_element(By.ID, id_select)
@@ -400,23 +414,23 @@ def selecionar_dropdown_por_label(driver, texto_label, valor):
         try:
             # Tenta selecionar o valor desejado pelo value
             select.select_by_value(str(valor))
-            print(f"[INFO] Valor '{valor}' selecionado no dropdown '{texto_label}' (por value).")
+            logger.info(f"Valor '{valor}' selecionado no dropdown '{texto_label}' (por value).")
             return True
         except Exception as erro_selecao:
-            print(f"[WARN] Não foi possível selecionar por value: {erro_selecao}. Tentando por texto visível...")
+            logger.warning(f"Não foi possível selecionar por value: {erro_selecao}. Tentando por texto visível...")
             try:
                 # Tenta selecionar pelo texto visível
                 select.select_by_visible_text(str(valor))
-                print(f"[INFO] Valor '{valor}' selecionado no dropdown '{texto_label}' (por texto visível).")
+                logger.info(f"Valor '{valor}' selecionado no dropdown '{texto_label}' (por texto visível).")
                 return True
             except Exception as erro_texto:
                 # Se não conseguir selecionar, lista as opções disponíveis
                 opcoes_disponiveis = [opcao.get_attribute('value') for opcao in select.options]
-                print(f"[ERRO] Valor '{valor}' não encontrado no dropdown '{texto_label}'. Opções disponíveis: {opcoes_disponiveis}")
+                logger.error(f"Valor '{valor}' não encontrado no dropdown '{texto_label}'. Opções disponíveis: {opcoes_disponiveis}")
                 return False
     except Exception as erro:
         # Erro ao localizar o label ou o select
-        print(f"[ERRO] Não foi possível localizar o dropdown associado ao label '{texto_label}': {erro}")
+        logger.error(f"Não foi possível localizar o dropdown associado ao label '{texto_label}': {erro}")
         return False
 
 def listar_opcoes_dropdown_por_label(driver, texto_label):
@@ -440,7 +454,7 @@ def listar_opcoes_dropdown_por_label(driver, texto_label):
         label = driver.find_element(By.XPATH, f"//label[normalize-space(text())='{texto_label}']")
         id_select = label.get_attribute("for")
         if not id_select:
-            print(f"[ERRO] Label '{texto_label}' não possui atributo 'for'.")
+            logger.error(f"Label '{texto_label}' não possui atributo 'for'.")
             return []
         # Localiza o select pelo id
         select_element = driver.find_element(By.ID, id_select)
@@ -450,11 +464,11 @@ def listar_opcoes_dropdown_por_label(driver, texto_label):
             valor = opcao.get_attribute('value')
             texto = opcao.text
             lista_opcoes.append({'valor': valor, 'texto': texto})
-        print(f"[INFO] Opções encontradas no dropdown '{texto_label}': {lista_opcoes}")
+        logger.info(f"Opções encontradas no dropdown '{texto_label}': {lista_opcoes}")
         return lista_opcoes
     except Exception as erro:
         # Erro ao localizar o label ou o select
-        print(f"[ERRO] Não foi possível listar opções do dropdown associado ao label '{texto_label}': {erro}")
+        logger.error(f"Não foi possível listar opções do dropdown associado ao label '{texto_label}': {erro}")
         return []
 
 def verificar_texto_presente_na_pagina(driver, texto, tempo_espera=5):
@@ -478,12 +492,12 @@ def verificar_texto_presente_na_pagina(driver, texto, tempo_espera=5):
             # Busca o texto no body da página
             corpo_pagina = driver.find_element('tag name', 'body').text
             if texto in corpo_pagina:
-                print(f"[INFO] Texto '{texto}' encontrado na página.")
+                logger.info(f"Texto '{texto}' encontrado na página.")
                 return True
         except Exception as erro:
-            print(f"[ERRO] Erro ao buscar texto na página: {erro}")
+            logger.error(f"Erro ao buscar texto na página: {erro}")
         time.sleep(0.5)
-    print(f"[INFO] Texto '{texto}' NÃO encontrado na página após {tempo_espera} segundos.")
+    logger.info(f"Texto '{texto}' NÃO encontrado na página após {tempo_espera} segundos.")
     return False
 
 def selecionar_select2_por_label(driver, texto_label, valor, tempo_espera=10):
@@ -506,7 +520,7 @@ def selecionar_select2_por_label(driver, texto_label, valor, tempo_espera=10):
         label = driver.find_element(By.XPATH, f"//label[normalize-space(text())='{texto_label}']")
         id_select = label.get_attribute("for")
         if not id_select:
-            print(f"[ERRO] Label '{texto_label}' não possui atributo 'for'.")
+            logger.error(f"Label '{texto_label}' não possui atributo 'for'.")
             return False
 
         # Clica no container do Select2 para abrir as opções
@@ -526,8 +540,8 @@ def selecionar_select2_por_label(driver, texto_label, valor, tempo_espera=10):
             EC.element_to_be_clickable((By.XPATH, f"//li[contains(@class, 'select2-results__option') and contains(text(), '{valor}')]"))
         )
         opcao.click()
-        print(f"[SUCESSO] Valor '{valor}' selecionado no Select2 '{texto_label}'.")
+        logger.info(f"Valor '{valor}' selecionado no Select2 '{texto_label}'.")
         return True
     except Exception as erro:
-        print(f"[ERRO] Não foi possível selecionar '{valor}' no Select2 '{texto_label}': {erro}")
+        logger.error(f"Não foi possível selecionar '{valor}' no Select2 '{texto_label}': {erro}")
         return False

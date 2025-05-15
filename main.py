@@ -8,11 +8,8 @@ import sys
 '''
 #############
 
-
-Liberar Codificação está funcionando?
-
-# Melhorias para depois:
-- No Liberar codificação não precisa escolher o mês/ano, só tentar o atual, e o anterior. Será?
+- Falta criar o de voltar ao DMC a entrevista.
+- A criação de senha do PMC e PMS tem que ser em prompt, não em pyautogui.
 
 #############
 '''

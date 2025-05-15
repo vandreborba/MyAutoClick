@@ -10,6 +10,9 @@ import os
 import glob  
 import pyperclip
 from automacoes.config_municipio_estado import config_municipio_estado
+from automacoes.log_util import obter_logger
+
+logger = obter_logger(__name__)
 
 login_usuario = None  # Variável global para armazenar o login do usuário
 senha_usuario = None  # Variável global para armazenar a senha do usuário
@@ -28,12 +31,12 @@ def executar_sequencia_portal(url_portal, nome_portal):
     """
     global login_usuario, senha_usuario, driver
     try:
-        print(f"[INFO] Acessando o site {nome_portal}...", flush=True)
+        logger.info(f"Acessando o site {nome_portal}...")
         driver.get(url_portal)
 
         # Aguarda o elemento de login aparecer
         aguardar_elemento(driver, (By.ID, "UserName"), 10)
-        print("[INFO] Elemento de login encontrado. Preenchendo credenciais...", flush=True)
+        logger.info("Elemento de login encontrado. Preenchendo credenciais...")
         # Preenche os campos de login e senha
         campo_login = driver.find_element(By.ID, "UserName")
         campo_login.send_keys(login_usuario)
@@ -49,7 +52,7 @@ def executar_sequencia_portal(url_portal, nome_portal):
 
         # Deixa a primeira letra de cada palavra do estado em maiúscula
         estado = config_municipio_estado.estado.title()
-        print(f"[INFO] Selecionando o estado: {estado}...", flush=True)
+        logger.info(f"Selecionando o estado: {estado}...")
                 
         util_selenium.aguardar_elemento_por_texto(
             driver, estado, nome_tag="td", tempo_espera=20
@@ -65,7 +68,7 @@ def executar_sequencia_portal(url_portal, nome_portal):
             driver, municipio, tempo_espera=20, nome_tag="td"
         )
         time.sleep(1)
-        print(f"[INFO] Clicando na cidade {municipio}...", flush=True)
+        logger.info(f"Clicando na cidade {municipio}...")
         util_selenium.clicar_elemento_por_texto_com_fallback(
             driver, municipio, tempo_espera=5, nome_tag="td"
         )
@@ -73,9 +76,9 @@ def executar_sequencia_portal(url_portal, nome_portal):
         # Aguarda o botão de exportação para CSV aparecer na tela
         botao_exportar = util_selenium.aguardar_elemento(driver, (By.ID, "ContentPlaceHolder1_btnExportarCSV"), 30)
         if (botao_exportar):
-            print("[INFO] Botão de exportação para CSV encontrado. Realizando clique...", flush=True)
+            logger.info("Botão de exportação para CSV encontrado. Realizando clique...")
             botao_exportar.click()
-            print("[INFO] Clique realizado no botão de exportação para CSV. Aguarde o download...", flush=True)
+            logger.info("Clique realizado no botão de exportação para CSV. Aguarde o download...")
             # Aguarda o download do arquivo CSV (delay fixo de 5 segundos)
             time.sleep(5)  # Aguarda 5 segundos para o download
             pasta_downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
@@ -86,19 +89,19 @@ def executar_sequencia_portal(url_portal, nome_portal):
                 # Pega o arquivo CSV mais recente
                 arquivo_csv = max(arquivos_csv, key=os.path.getctime)
             if arquivo_csv and os.path.exists(arquivo_csv):
-                print(f"[SUCESSO] Arquivo CSV encontrado: {arquivo_csv}", flush=True)
+                logger.info(f"Arquivo CSV encontrado: {arquivo_csv}")
                 with open(arquivo_csv, 'r', encoding='utf-8') as f:
                     global conteudo_csv_exportado
                     conteudo_csv_exportado = f.read()
-                print("[INFO] Conteúdo do CSV exportado salvo na variável global.", flush=True)
+                logger.info("Conteúdo do CSV exportado salvo na variável global.")
             else:
-                print("[ERRO] Arquivo CSV não foi encontrado na pasta de downloads.", flush=True)
+                logger.error("Arquivo CSV não foi encontrado na pasta de downloads.")
 
         else:
-            print("[ERRO] Botão de exportação para CSV não foi encontrado.", flush=True)
+            logger.error("Botão de exportação para CSV não foi encontrado.")
 
     except Exception as e:
-        print(f"Erro ao acessar o site {nome_portal}: {e}", flush=True)
+        logger.error(f"Erro ao acessar o site {nome_portal}: {e}")
 
     return driver
 
@@ -128,19 +131,19 @@ def juntarArquivosCSV():
     arquivos_csv = sorted(glob.glob(padrao_arquivo), key=os.path.getctime, reverse=True)
     
     if len(arquivos_csv) < 2:
-        print("[ERRO] Não foram encontrados dois arquivos CSV para juntar.")
+        logger.error("Não foram encontrados dois arquivos CSV para juntar.")
         return None
     
     # Seleciona os dois arquivos CSV mais recentes
     arquivo_csv1 = arquivos_csv[0]
     arquivo_csv2 = arquivos_csv[1]
-    print(f"[INFO] Juntando arquivos: {arquivo_csv1} e {arquivo_csv2}")
+    logger.info(f"Juntando arquivos: {arquivo_csv1} e {arquivo_csv2}")
     
     linhas_unificadas = []
     linhas1 = ler_arquivo_csv_coringa(arquivo_csv1)
     linhas2 = ler_arquivo_csv_coringa(arquivo_csv2)
     if not linhas1 or not linhas2:
-        print("[ERRO] Um dos arquivos CSV está vazio.")
+        logger.error("Um dos arquivos CSV está vazio.")
         return None
     # Adiciona o cabeçalho do primeiro arquivo
     linhas_unificadas.append(linhas1[0].strip())
@@ -150,11 +153,15 @@ def juntarArquivosCSV():
     linhas_unificadas.extend([linha.strip() for linha in linhas2[1:]])
     
     # Salva o arquivo unificado
+
     arquivo_unificado = os.path.join(pasta_downloads, 'relatorio_mensal_unificado.csv')
     with open(arquivo_unificado, 'w', encoding='utf-8') as f:
         for linha in linhas_unificadas:
             f.write(linha + '\n')
-    print(f"[SUCESSO] Arquivo unificado salvo em: {arquivo_unificado}")
+    logger.info(f"Arquivo unificado salvo em: {arquivo_unificado}")
+    # limpar tela:
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print(f"Arquivo unificado salvo em: {arquivo_unificado}")
     return arquivo_unificado
 
 def copiarAreadeTransferencia():
@@ -167,20 +174,21 @@ def copiarAreadeTransferencia():
     pasta_downloads = os.path.join(os.path.expanduser('~'), 'Downloads')
     arquivo_unificado = os.path.join(pasta_downloads, 'relatorio_mensal_unificado.csv')
     if not os.path.exists(arquivo_unificado):
-        print("[ERRO] Arquivo unificado não encontrado para copiar para a área de transferência.")
+        logger.error("Arquivo unificado não encontrado para copiar para a área de transferência.")
         return
     with open(arquivo_unificado, 'r', encoding='utf-8') as f:
         conteudo = f.read()
     # Substitui apenas o caractere ';' por tab para facilitar a colagem no Excel
     conteudo_com_tabs = conteudo.replace(';', '\t')
     pyperclip.copy(conteudo_com_tabs)
-    print("[SUCESSO] Conteúdo do relatório unificado copiado para a área de transferência (formato Excel, separador tab).")
+    logger.info("Conteúdo do relatório unificado copiado para a área de transferência (formato Excel, separador tab).")
+    print("Conteúdo do relatório unificado copiado para a área de transferência.")
 
 def executar():
     global driver, login_usuario, senha_usuario
     login_usuario, senha_usuario = utils.solicitar_credenciais("Portal Web PMC/PMS")    
     driver = util_selenium.inicializar_webdriver_com_perfil()
-    print("Iniciando automação de relatórios mensais...")
+    logger.info("Iniciando automação de relatórios mensais...")
     # Executa sequência para PMC
     executar_sequencia_portal("https://pmc.ibge.gov.br/", "PMC")
     # Executa sequência para PMS
@@ -188,6 +196,7 @@ def executar():
     juntarArquivosCSV()
     copiarAreadeTransferencia()
     driver.quit()
+    logger.info("Automação de relatórios mensais concluída.")
     print("Automação de relatórios mensais concluída.")
 
 # para teste.

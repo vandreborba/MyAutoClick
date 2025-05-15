@@ -4,8 +4,11 @@ import time
 from cryptography.fernet import Fernet
 import base64
 
-CAMINHO_ARQUIVO_CREDENCIAIS = os.path.join(os.path.expanduser('~'), '.credenciais_sistema')
-CAMINHO_ARQUIVO_CHAVE = os.path.join(os.path.expanduser('~'), '.chave_criptografia')
+# Chave fixa para criptografia (ATENÇÃO: visível no código, use apenas em ambiente controlado)
+CHAVE_FIXA = b'2Qw1v7Qw1v7Kw1v7Qw1v7Qw1v7Hw1v8Qw1v7Qw1v7Qw='
+
+CAMINHO_ARQUIVO_CREDENCIAIS = os.path.join(os.path.expanduser('~'), '.myautoclicer')
+# Não é mais necessário CAMINHO_ARQUIVO_CHAVE
 
 def preparar_navegador(url):
     """ 
@@ -119,21 +122,15 @@ def aguardar_carregamento_pagina(
 
 def gerar_e_salvar_chave_criptografia():
     """
-    Gera uma chave de criptografia e salva em arquivo local.
+    Retorna a chave fixa definida no código.
     """
-    chave = Fernet.generate_key()
-    with open(CAMINHO_ARQUIVO_CHAVE, 'wb') as arquivo_chave:
-        arquivo_chave.write(chave)
-    return chave
+    return CHAVE_FIXA
 
 def carregar_chave_criptografia():
     """
-    Carrega a chave de criptografia do arquivo local, gerando uma nova se não existir.
+    Retorna a chave fixa definida no código.
     """
-    if not os.path.exists(CAMINHO_ARQUIVO_CHAVE):
-        return gerar_e_salvar_chave_criptografia()
-    with open(CAMINHO_ARQUIVO_CHAVE, 'rb') as arquivo_chave:
-        return arquivo_chave.read()
+    return CHAVE_FIXA
 
 def salvar_credenciais_criptografadas(login, senha):
     """
