@@ -1,5 +1,10 @@
 # Diretrizes para o GitHub Copilot
 
+## Organização do Código
+- **Separação por Funções:** Sempre que possível, separe a lógica em funções pequenas, reutilizáveis e com responsabilidade única.
+- **Arquivos Auxiliares:** Crie e utilize arquivos auxiliares para centralizar funcionalidades específicas (ex: manipulação de arquivos, tratamento de dados, utilitários de interface, etc.), evitando códigos longos e monolíticos.
+- **Modularização:** Prefira importar funções de módulos auxiliares ao invés de duplicar código.
+
 ## Convenções de Nomeação
 - **Funções e Variáveis:** Todos os nomes de funções e variáveis devem ser escritos em português e descritivos, refletindo claramente sua finalidade.
 

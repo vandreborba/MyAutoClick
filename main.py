@@ -1,5 +1,6 @@
 import os
 from automacoes import relatorioMensais
+from automacoes.autorizacaoDirigir import autorizacao_dirigir
 from automacoes.pnadC import baixarQuestionario, liberarCodificacao
 import sys
 
@@ -46,6 +47,8 @@ def mostrar_menu():
     print("\n\033[1;34m--- PnadC ---\033[0m")
     print("\033[1;32m2.\033[0m  Liberar Codificação")    
     print("\033[1;32m3.\033[0m  Baixar Questionário")
+    print("\n\033[1;34m--- Administração ---\033[0m")
+    print("\033[1;32m4.\033[0m  Autorização para Dirigir")
     print("\n\033[1;34m--- Outros ---\033[0m")
     print("\033[1;32m8.\033[0m  Configurar Município e Estado")
     print("\033[1;32m9.\033[0m  Limpar credenciais salvas (PMS/PMC)")
@@ -65,6 +68,8 @@ def executar_opcao(opcao):
         liberarCodificacao.executar()
     elif str(opcao) == "3":
         baixarQuestionario.executar()
+    elif str(opcao) == "4":
+        autorizacao_dirigir.executar()
     elif str(opcao) == "8":
         print("\n--- Configuração de Município e Estado ---")
         print(f"Estado atual: {config_municipio_estado.estado}")

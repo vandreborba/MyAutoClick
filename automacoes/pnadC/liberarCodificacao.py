@@ -106,8 +106,13 @@ def sequencia_portal(mes, ano):
             clicar_todos_botoes_bloqueado(driver)
             # Após liberar, clicar no botão de submit para efetivar as liberações
             util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btnSubmit"))
-            # Aparece uma mensagem de confirmação após o carregamento, clicar em "OK"                                         
-            util_selenium.clicar_elemento_com_fallback(driver, (By.CSS_SELECTOR, "button.bootbox-accept.btn-success"))
+            # Aparece uma mensagem de confirmação após o carregamento, clicar em "OK"  ou apertar ESC                                  
+            time.sleep(5)            
+            # Em vez de clicar no botão, envia a tecla ESC para fechar a caixa de diálogo
+            from selenium.webdriver.common.keys import Keys
+            driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+            time.sleep(1)
+            util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btnMenuFiltro"))
             time.sleep(1)
 
         # Depois que percorreu tudo do setor, tem que clicar em Expandir Filtro, para aparecer o menu novamente:        
@@ -128,5 +133,5 @@ def executar():
     sequencia_portal(mes, ano)
 
     # Terminou:
-    # driver.quit()
+    driver.quit()
     print("Automação concluída.")

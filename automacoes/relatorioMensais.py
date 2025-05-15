@@ -47,21 +47,27 @@ def executar_sequencia_portal(url_portal, nome_portal):
         aguardar_elemento(driver, (By.ID, "ContentPlaceHolder1_quadroColetaUF"), 10)
         time.sleep(2)
 
-        # Clica no estado configurado (correspondência parcial, ex: apenas 'Paraná')
-        print(f"[INFO] Clicando no estado {config_municipio_estado.estado}...", flush=True)
-        # Passa o mouse sobre o elemento antes do clique (simula hover, se necessário)
-        util_selenium.passar_mouse_sobre_elemento_por_texto(driver, config_municipio_estado.estado, nome_tag="td", tempo_espera=10)
+        # Deixa a primeira letra de cada palavra do estado em maiúscula
+        estado = config_municipio_estado.estado.title()
+        print(f"[INFO] Selecionando o estado: {estado}...", flush=True)
+                
+        util_selenium.aguardar_elemento_por_texto(
+            driver, estado, nome_tag="td", tempo_espera=20
+        )
+    
         # Tenta clicar normalmente, via JS e dispara manualmente o evento onclick, se existir
-        util_selenium.clicar_elemento_por_texto_com_fallback(driver, config_municipio_estado.estado, nome_tag="td", tempo_espera=10)
+        util_selenium.clicar_elemento_por_texto_com_fallback(driver, estado, nome_tag="td", tempo_espera=10)
+        
+        municipio = config_municipio_estado.municipio.title()
 
         # Aguarda o elemento da cidade configurada
         util_selenium.aguardar_elemento_por_texto(
-            driver, config_municipio_estado.municipio, nome_tag="td", tempo_espera=20
+            driver, municipio, tempo_espera=20, nome_tag="td"
         )
         time.sleep(1)
-        print(f"[INFO] Clicando na cidade {config_municipio_estado.municipio}...", flush=True)
+        print(f"[INFO] Clicando na cidade {municipio}...", flush=True)
         util_selenium.clicar_elemento_por_texto_com_fallback(
-            driver, config_municipio_estado.municipio, nome_tag="td", tempo_espera=5
+            driver, municipio, tempo_espera=5, nome_tag="td"
         )
 
         # Aguarda o botão de exportação para CSV aparecer na tela
@@ -154,6 +160,7 @@ def juntarArquivosCSV():
 def copiarAreadeTransferencia():
     """
     Função para copiar o conteúdo do arquivo unificado para a área de transferência, formatando como tabela com tabs para colar no Excel.
+    Substitui apenas o caractere ';' por tab ('\t') na cópia para a área de transferência.
     """
     import os
     import pyperclip
@@ -164,10 +171,10 @@ def copiarAreadeTransferencia():
         return
     with open(arquivo_unificado, 'r', encoding='utf-8') as f:
         conteudo = f.read()
-    # Substitui as vírgulas por tabs para facilitar a colagem no Excel
-    conteudo_com_tabs = '\n'.join(['\t'.join(linha.split(',')) for linha in conteudo.splitlines()])
+    # Substitui apenas o caractere ';' por tab para facilitar a colagem no Excel
+    conteudo_com_tabs = conteudo.replace(';', '\t')
     pyperclip.copy(conteudo_com_tabs)
-    print("[SUCESSO] Conteúdo do relatório unificado copiado para a área de transferência (formato Excel).")
+    print("[SUCESSO] Conteúdo do relatório unificado copiado para a área de transferência (formato Excel, separador tab).")
 
 def executar():
     global driver, login_usuario, senha_usuario
