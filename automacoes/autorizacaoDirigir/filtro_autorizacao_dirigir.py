@@ -4,10 +4,11 @@ import time
 import pandas as pd
 import datetime
 
-def obter_arquivo_relatorio_mais_recente(pasta_downloads=None, timeout=30):
+def obter_arquivo_relatorio_mais_recente(pasta_downloads=None, timeout=30, aguardar_download=True):
     """
     Procura o arquivo mais recente que começa com 'RelValidadeCNH' e termina com .xls ou .xlsx na pasta Downloads.
     Aguarda até o arquivo aparecer ou até o tempo limite (timeout).
+    Se aguardar_download=True, espera o arquivo ser baixado completamente (sem .crdownload).
     Retorna o caminho do arquivo encontrado ou None.
     """
     if not pasta_downloads:
@@ -17,11 +18,17 @@ def obter_arquivo_relatorio_mais_recente(pasta_downloads=None, timeout=30):
     arquivo_encontrado = None
     while time.time() - tempo_inicial < timeout:
         arquivos = glob.glob(padrao)
+        arquivos = [a for a in arquivos if not a.endswith('.crdownload')]
         if arquivos:
             # Seleciona o arquivo mais recente
             arquivo_encontrado = max(arquivos, key=os.path.getctime)
             break
         time.sleep(1)  # Aguarda 1 segundo antes de tentar novamente
+    if aguardar_download and arquivo_encontrado:
+        # Aguarda o arquivo sumir da lista de .crdownload
+        while os.path.exists(arquivo_encontrado + '.crdownload'):
+            print(f"[INFO] Aguardando download finalizar: {arquivo_encontrado}.crdownload")
+            time.sleep(1)
     return arquivo_encontrado
 
 def processar_dados(dados, siapes):
@@ -72,13 +79,13 @@ def processar_dados(dados, siapes):
     dados.sort_values('Funcionário', inplace=True)
 
     # Exibe e salva os resultados
-    print(f'Tabela geral:\n{dados}\n\n\n\n')
+    print(f'Tabela geral:\n{dados.to_string(index=False)}\n\n\n\n')
     dados.to_excel('Vencimento Carteiras.xlsx', index=False)
     # Copia o conteúdo do DataFrame para a área de transferência, facilitando a colagem no Excel
     dados.to_clipboard(index=False, excel=True)
     print('Conteúdo do relatório copiado para a área de transferência (formato Excel).')
-    print('Os seguintes funcionários estão com a carteira vencida:\n\n')
-    print(dados[dados['Dias restantes'] == 'VENCIDO'])
+    print('Os seguintes servidores estão com a carteira vencida:\n\n')
+    print(dados[dados['Dias restantes'] == 'VENCIDO'].to_string(index=False))
 
 def filtrar(lista_siapes):
     """

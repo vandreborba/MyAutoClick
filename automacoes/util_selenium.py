@@ -316,24 +316,63 @@ def alternar_para_ultima_aba(driver):
 def passar_mouse_sobre_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
     """
     Move o mouse sobre um elemento identificado pelo texto, simulando o hover necessário para exibir menus suspensos.
+    Garante robustez para menus <a> do IBGE, disparando eventos JavaScript de mouseover/mouseenter caso necessário.
     Parâmetros:
         driver: Instância do WebDriver.
         texto: Texto do elemento alvo.
         nome_tag: Tag HTML do elemento (ex: 'a', 'div'). Use '*' para qualquer tag.
         tempo_espera: Tempo máximo de espera em segundos.
+    Retorno:
+        bool: True se o hover foi realizado com sucesso, False caso contrário.
     """
     from selenium.webdriver.common.action_chains import ActionChains
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
+    import time
 
     print(f"[INFO] Procurando elemento para hover: '{texto}' (tag: {nome_tag})")
     xpath = f"//{nome_tag}[contains(normalize-space(text()), '{texto}')]"
-    elemento = WebDriverWait(driver, tempo_espera).until(
-        EC.visibility_of_element_located((By.XPATH, xpath))
-    )
-    ActionChains(driver).move_to_element(elemento).perform()
-    print(f"[INFO] Mouse passado sobre o elemento '{texto}'.")
+    try:
+        elemento = WebDriverWait(driver, tempo_espera).until(
+            EC.visibility_of_element_located((By.XPATH, xpath))
+        )
+        # Rola até o elemento para garantir visibilidade
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", elemento)
+        time.sleep(0.2)
+        # Primeiro tenta o hover padrão
+        ActionChains(driver).move_to_element(elemento).perform()
+        print(f"[INFO] Mouse passado sobre o elemento '{texto}' via ActionChains.")
+        time.sleep(0.2)
+        # Verifica se um submenu ficou visível (heurística: procura por submenus abertos próximos)
+        submenu_visivel = False
+        try:
+            submenu = elemento.find_element(By.XPATH, "./following-sibling::*[contains(@class, 'open') or contains(@class, 'show')]")
+            if submenu.is_displayed():
+                submenu_visivel = True
+        except Exception:
+            pass
+        if submenu_visivel:
+            print(f"[INFO] Submenu detectado após hover padrão.")
+            return True
+        # Se não funcionou, tenta disparar eventos via JavaScript
+        print(f"[WARN] Hover padrão não abriu submenu. Tentando disparar eventos JavaScript...")
+        driver.execute_script("var evObj = document.createEvent('MouseEvents'); evObj.initEvent('mouseover', true, false); arguments[0].dispatchEvent(evObj);", elemento)
+        driver.execute_script("var evObj = document.createEvent('MouseEvents'); evObj.initEvent('mouseenter', true, false); arguments[0].dispatchEvent(evObj);", elemento)
+        time.sleep(0.3)
+        # Verifica novamente se o submenu ficou visível
+        try:
+            submenu = elemento.find_element(By.XPATH, "./following-sibling::*[contains(@class, 'open') or contains(@class, 'show')]")
+            if submenu.is_displayed():
+                print(f"[INFO] Submenu detectado após eventos JS.")
+                return True
+        except Exception:
+            pass
+        print(f"[ERRO] Não foi possível exibir o submenu para o elemento '{texto}'.")
+        return False
+    except Exception as erro:
+        print(f"[ERRO] Erro ao tentar passar mouse sobre elemento '{texto}': {erro}")
+        return False
 
 def selecionar_dropdown_por_label(driver, texto_label, valor):
     """

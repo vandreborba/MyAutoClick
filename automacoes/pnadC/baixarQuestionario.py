@@ -86,7 +86,7 @@ def listar_e_baixar_entrevistas_disponiveis(driver):
                 util_selenium.clicar_elemento_com_fallback(driver, seletor_pdf)
                 print("[SUCESSO] Clique realizado no ícone de PDF para baixar o questionário.")
                 # Após clicar, aguarda e copia o arquivo baixado
-                time.sleep(4)
+                time.sleep(2) # é bem rápido.
                 copiar_ultimo_pdf_baixado(info)
             except Exception as erro_pdf:
                 print(f"[ERRO] Não foi possível clicar no ícone de PDF: {erro_pdf}")

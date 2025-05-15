@@ -3,13 +3,8 @@ import os
 from automacoes import util_selenium
 from automacoes.autorizacaoDirigir import filtro_autorizacao_dirigir
 
-# Caminho do arquivo onde a lista de SIAPEs será salva (pasta oculta .dados)
-CAMINHO_PASTA_DADOS = os.path.join(os.path.dirname(__file__), '.dados')
-CAMINHO_ARQUIVO_SIAPES = os.path.join(CAMINHO_PASTA_DADOS, 'SIAPES_MOTORISTAS.TXT')
-
-# Garante que a pasta oculta exista
-if not os.path.exists(CAMINHO_PASTA_DADOS):
-    os.makedirs(CAMINHO_PASTA_DADOS)
+# Caminho do arquivo onde a lista de SIAPEs será salva (pasta do usuário)
+CAMINHO_ARQUIVO_SIAPES = os.path.join(os.path.expanduser('~'), 'SIAPES_MOTORISTAS.TXT')
 
 # Variável global para armazenar a lista de SIAPEs
 lista_siapes = []
@@ -27,15 +22,18 @@ def iniciarSequencia():
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Sistemas Administrativos", tempo_espera=180)
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "SDA")
     # Alterna para a nova aba aberta, caso o clique abra em nova aba
-    util_selenium.alternar_para_ultima_aba(driver)
-    util_selenium.passar_mouse_sobre_elemento_por_texto(driver, "GESTÃO E LOGÍSTICA")
-    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Autorização para Dirigir")
-    util_selenium.passar_mouse_sobre_elemento_por_texto(driver, "Relatórios")
+    util_selenium.alternar_para_ultima_aba(driver)    
+    # Aqui pode acontecer de pedir o login:
+    # cada hora o SDA abre de uma forma parece... tem que ver se tem o Autorização para Dirigir        
+    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "GESTÃO E LOGÍSTICA", tempo_espera=5)
+    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Autorização para Dirigir", tempo_espera=180)
+    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Relatórios")
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Relatório de Validade de CNH")
-    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Excel")
+    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Excel", tempo_espera=20) # as vezes demora.
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Gerar Relatório")
     # Ele irá baixar um .xlsx na pasta Downloads, com todos os motoristas.
     filtro_autorizacao_dirigir.filtrar(lista_siapes)
+    driver.quit()
 
 
 

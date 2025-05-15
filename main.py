@@ -1,4 +1,5 @@
 import os
+import pandas  # Garante inclusão do pandas no build do PyInstaller
 from automacoes import relatorioMensais
 from automacoes.autorizacaoDirigir import autorizacao_dirigir
 from automacoes.pnadC import baixarQuestionario, liberarCodificacao
@@ -48,10 +49,10 @@ def mostrar_menu():
     print("\033[1;32m2.\033[0m  Liberar Codificação")    
     print("\033[1;32m3.\033[0m  Baixar Questionário")
     print("\n\033[1;34m--- Administração ---\033[0m")
-    print("\033[1;32m4.\033[0m  Autorização para Dirigir")
+    print("\033[1;32m4.\033[0m  Relatório de Autorização para Dirigir")
     print("\n\033[1;34m--- Outros ---\033[0m")
     print("\033[1;32m8.\033[0m  Configurar Município e Estado")
-    print("\033[1;32m9.\033[0m  Limpar credenciais salvas (PMS/PMC)")
+    print("\033[1;32m9.\033[0m  Limpar credenciais salvas")
     print("\033[1;31m0.\033[0m  Sair")
     print("="*50)
 

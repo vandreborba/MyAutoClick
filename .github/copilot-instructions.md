@@ -23,8 +23,12 @@
 - **Centralização de Funções:** Todas as funções relacionadas ao Selenium devem ser centralizadas no arquivo `util_selenium.py` para facilitar a reutilização e manutenção.
 - **Boas Práticas:** Utilize as funções de `util_selenium.py` sempre que possível para evitar duplicação de código.
 
-# Para compilar o projeto e gerar um único arquivo .exe na área de trabalho, execute:
+# Para compilar o projeto e gerar um único arquivo .exe na pasta 'dist' e copiar para a área de trabalho, execute:
 #
-# pyinstaller --onefile --distpath "%USERPROFILE%\Desktop" --name "My IBGE AutoClicker" --icon="icon.ico" main.py
+# Opção recomendada (PowerShell):
 #
+#   powershell -ExecutionPolicy Bypass -File .\compilar_e_copiar.ps1
+#
+#
+# O executável será gerado na pasta 'dist' do projeto e uma cópia será feita para a área de trabalho.
 # Utilize este comando sempre que solicitar a compilação do projeto com ícone personalizado.
