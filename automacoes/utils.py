@@ -3,12 +3,70 @@ import pyautogui
 import time
 from cryptography.fernet import Fernet
 import base64
+import hashlib
+import getpass
+import platform
+import uuid
 
-# Chave fixa para criptografia (ATENÇÃO: visível no código, use apenas em ambiente controlado)
-CHAVE_FIXA = b'2Qw1v7Qw1v7Kw1v7Qw1v7Qw1v7Hw1v8Qw1v7Qw1v7Qw='
+# Caminho do diretório oculto para arquivos do programa
+CAMINHO_DIRETORIO_OCULTO = os.path.join(os.path.expanduser('~'), '.myibgeautoclicker')
+# Caminho do arquivo de credenciais criptografadas
+CAMINHO_ARQUIVO_CREDENCIAIS = os.path.join(CAMINHO_DIRETORIO_OCULTO, 'credenciais')
+# Caminho do arquivo da chave de criptografia (oculto)
+CAMINHO_ARQUIVO_CHAVE = os.path.join(CAMINHO_DIRETORIO_OCULTO, 'chave_criptografia')
 
-CAMINHO_ARQUIVO_CREDENCIAIS = os.path.join(os.path.expanduser('~'), '.myautoclicer')
-# Não é mais necessário CAMINHO_ARQUIVO_CHAVE
+# Garante que o diretório oculto existe
+if not os.path.exists(CAMINHO_DIRETORIO_OCULTO):
+    os.makedirs(CAMINHO_DIRETORIO_OCULTO)
+
+# Função utilitária para obter um hash único do computador
+def obter_hash_maquina():
+    """
+    Gera um hash único baseado em informações do computador para proteger a chave de criptografia.
+    Usa nome do usuário, nome do computador e serial do disco do sistema.
+    """
+    usuario = getpass.getuser()
+    computador = platform.node()
+    try:
+        # Serial do disco do sistema (Windows)
+        import subprocess
+        resultado = subprocess.check_output('wmic diskdrive get SerialNumber', shell=True)
+        serial = resultado.decode(errors='ignore').split('\n')[1].strip()
+    except Exception:
+        serial = 'serial_padrao'
+    base = f"{usuario}-{computador}-{serial}"
+    return hashlib.sha256(base.encode('utf-8')).digest()
+
+# Função para gerar e salvar a chave de criptografia
+
+def gerar_e_salvar_chave_criptografia():
+    """
+    Gera uma chave Fernet e salva criptografada no arquivo oculto do usuário.
+    Se já existir, apenas retorna a chave carregada.
+    """
+    if os.path.exists(CAMINHO_ARQUIVO_CHAVE):
+        return carregar_chave_criptografia()
+    chave = Fernet.generate_key()
+    hash_maquina = obter_hash_maquina()
+    # Criptografa a chave com XOR simples (simetria, só para dificultar cópia)
+    chave_criptografada = bytes([b ^ hash_maquina[i % len(hash_maquina)] for i, b in enumerate(chave)])
+    with open(CAMINHO_ARQUIVO_CHAVE, 'wb') as arquivo:
+        arquivo.write(chave_criptografada)
+    return chave
+
+# Função para carregar a chave de criptografia
+
+def carregar_chave_criptografia():
+    """
+    Carrega a chave Fernet do arquivo oculto, descriptografando com o hash do computador.
+    """
+    if not os.path.exists(CAMINHO_ARQUIVO_CHAVE):
+        return gerar_e_salvar_chave_criptografia()
+    hash_maquina = obter_hash_maquina()
+    with open(CAMINHO_ARQUIVO_CHAVE, 'rb') as arquivo:
+        chave_criptografada = arquivo.read()
+    chave = bytes([b ^ hash_maquina[i % len(hash_maquina)] for i, b in enumerate(chave_criptografada)])
+    return chave
 
 def preparar_navegador(url):
     """ 
@@ -119,18 +177,6 @@ def aguardar_carregamento_pagina(
             print(f"Mensagem: {str(e)}")
             print(f"Argumentos: {e.args}")
             return False
-
-def gerar_e_salvar_chave_criptografia():
-    """
-    Retorna a chave fixa definida no código.
-    """
-    return CHAVE_FIXA
-
-def carregar_chave_criptografia():
-    """
-    Retorna a chave fixa definida no código.
-    """
-    return CHAVE_FIXA
 
 def salvar_credenciais_criptografadas(login, senha):
     """

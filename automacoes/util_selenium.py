@@ -70,6 +70,26 @@ def inicializar_webdriver_com_perfil():
     logger.info(f"WebDriver iniciado com o perfil de automação.")
     return driver
 
+# Função para inicializar o WebDriver de forma indetectável
+# Utiliza o pacote undetected-chromedriver para evitar bloqueios por servidores
+
+def inicializar_webdriver_indetectavel():
+    """
+    Inicializa o WebDriver do Selenium utilizando undetected-chromedriver,
+    dificultando a detecção por sites que bloqueiam automações.
+    Retorna:
+        WebDriver: Instância do WebDriver indetectável.
+    """
+    import undetected_chromedriver as uc
+    # Comentário: Configurações do Chrome podem ser personalizadas conforme necessário
+    opcoes = uc.ChromeOptions()
+    # Não adicione 'headless' para garantir que o navegador seja visível
+    # Exemplo de configuração adicional:
+    # opcoes.add_argument('--disable-blink-features=AutomationControlled')
+    driver = uc.Chrome(options=opcoes, headless=False, use_subprocess=True)
+    logger.info("WebDriver indetectável iniciado com undetected-chromedriver.")
+    return driver
+
 # Função para aguardar um elemento estar presente na página
 def aguardar_elemento(driver, seletor, tempo=10):
     """

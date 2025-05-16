@@ -2,7 +2,7 @@ import logging
 import os
 
 # Caminho do arquivo de log (na pasta do usuário, subpasta oculta .myautoclicker)
-PASTA_LOG = os.path.join(os.path.expanduser('~'), '.myautoclicker')
+PASTA_LOG = os.path.join(os.path.expanduser('~'), '.myibgeautoclicker')
 if not os.path.exists(PASTA_LOG):
     os.makedirs(PASTA_LOG)
 CAMINHO_LOG = os.path.join(PASTA_LOG, 'myautoclicker.log')
