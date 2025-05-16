@@ -12,6 +12,9 @@ logger = obter_logger(__name__)
 # Constante para controlar exibição dos logs do Chromedriver/Chrome
 EXIBIR_LOGS_CHROMEDRIVER = False  # Altere para True para ver logs do driver no console
 
+# Constante para o caminho do Chrome Portable (Desktop do usuário)
+CAMINHO_CHROME_PORTABLE = os.path.join(os.path.expanduser('~'), 'Desktop', 'GoogleChromePortable', 'App', 'Chrome-bin', 'chrome.exe')
+
 def testar_webdriver():
     driver = inicializar_webdriver()
     driver.get("https://www.google.com")

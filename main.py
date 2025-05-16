@@ -9,7 +9,6 @@ import sys
 #############
 
 - Falta criar o de voltar ao DMC a entrevista.
-- A criação de senha do PMC e PMS tem que ser em prompt, não em pyautogui.
 
 #############
 '''
@@ -91,6 +90,10 @@ def executar_opcao(opcao):
 
 def main():    
     executando = True
+    # Aviso sobre o Chrome Portable
+    from automacoes.util_selenium import CAMINHO_CHROME_PORTABLE
+    if not os.path.exists(CAMINHO_CHROME_PORTABLE):
+        print("\n\033[1;31mATENÇÃO:\033[0m Para automação funcionar corretamente, baixe a versão 124 do Google Chrome Portable e extraia na área de trabalho, na pasta 'GoogleChromePortable'.\nO executável deve estar em: 'GoogleChromePortable/App/Chrome-bin/chrome.exe'\nLink recomendado: https://portableapps.com/apps/internet/google_chrome_portable (verifique a versão 124)")
     # Verifica se foi passado argumento na linha de comando
     if len(sys.argv) > 1:
         argumento = sys.argv[1]

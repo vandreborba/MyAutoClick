@@ -207,5 +207,5 @@ def executar():
     sequencia_portal(lista_entradas, mes, ano)    
     
     # Terminou:
-    # driver.quit()
+    driver.quit()
     print("Automação concluída.")
