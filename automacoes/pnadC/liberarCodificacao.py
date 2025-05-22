@@ -1,9 +1,48 @@
 import time
-from automacoes import util_selenium
+from automacoes import util_selenium, utils
 from selenium.webdriver.common.by import By
 from automacoes.config_municipio_estado import config_municipio_estado
+from automacoes.log_util import obter_logger
+
+logger = obter_logger(__name__)
 
 driver = None  # Variável global para armazenar o WebDriver
+
+def aguardar_distribuicao_nao_zero(driver, tempo_espera=60):
+    """
+    Aguarda até que o elemento com id 'NaoDistribuido' ou 'Distribuido' tenha valor diferente de zero.
+    Útil para garantir que a página carregou os dados de distribuição.
+
+    Parâmetros:
+        driver: Instância do WebDriver.
+        tempo_espera: Tempo máximo de espera em segundos (padrão: 60).
+    Retorno:
+        bool: True se algum dos elementos ficou diferente de zero, False se tempo esgotado.
+    """
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    import time
+
+    logger.info("Aguardando que 'NaoDistribuido' ou 'Distribuido' seja diferente de zero...")
+    def condicao(driver):
+        for id_elemento in ["NaoDistribuido", "Distribuido"]:
+            try:
+                elemento = driver.find_element(By.ID, id_elemento)
+                texto = elemento.text.strip()
+                if texto and texto != "0":
+                    logger.info(f"Elemento '{id_elemento}' com valor diferente de zero: {texto}")
+                    return True
+            except Exception:
+                continue
+        return False
+
+    try:
+        WebDriverWait(driver, tempo_espera).until(condicao)
+        return True
+    except Exception as erro:
+        logger.error(f"Timeout ao aguardar distribuição diferente de zero: {erro}")
+        return False
 
 def abrir_pnad_c(driver):
     """
@@ -18,6 +57,41 @@ def abrir_pnad_c(driver):
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "PNAD Contínua")
     # Alterna para a nova aba aberta, caso o clique abra em nova aba
     util_selenium.alternar_para_ultima_aba(driver)
+    # Aguarda até que o elemento com id 'NaoDistribuido' ou 'Distribuido' seja diferente de zero
+    aguardar_distribuicao_nao_zero(driver, tempo_espera=60)
+    print("[INFO] Site Carregado")
+    # tem que logar ou já está logado?
+    if util_selenium.verificar_texto_presente(driver, "Login"):
+        util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Login")
+        (login, senha) = utils.solicitar_credenciais("Portalweb")
+        util_selenium.aguardar_elemento_por_texto(driver, "Login Integrado", tempo_espera=30)
+        # Preenche o campo de login
+        util_selenium.preencher_campo(driver, (By.ID, "UserName"), login)
+        # Preenche o campo de senha
+        util_selenium.preencher_campo(driver, (By.ID, "Password"), senha)
+        # Clica no botão de login
+        util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "login"))
+        # Aguarda até aparecer "Login ou senha inválidos." ou "Visão Geral"
+        resultado_login = util_selenium.aguardar_textos_na_pagina(
+            driver,
+            ["Login ou senha inválidos.", "Visão Geral"],
+            tempo_espera=30
+        )
+        if resultado_login == "Login ou senha inválidos.":
+            print("[ERRO] Login ou senha inválidos. Limpe suas credenciais e tente novamente.")
+            driver.quit()
+            return
+        # Se for "Visão Geral", segue normalmente
+        # Se for None, pode ser timeout, tratar conforme necessário
+        elif resultado_login is None:
+            print("[ERRO] Não foi possível determinar o resultado do login (timeout).")
+            driver.quit()
+            return
+        # Se "Visão Geral", segue o fluxo normalmente
+        time.sleep(2)
+    
+    # Já logou.    
+    print("[INFO] Acesso à PNAD Contínua concluído.")    
 
 def solicitar_mes_ano():
     """
@@ -69,8 +143,11 @@ def sequencia_portal(mes, ano):
     # Vamos tentr acessar a URL diretamente agora:
     driver.get(urlLiberarCodificacao)
 
+    # se aparecer "Login Integrado", vamos digitar o login e senha automaticamente
+    
+
     # tem que aguardar o carregamento: Aguardar aparecer o estado e município configurados
-    util_selenium.aguardar_elemento_por_texto(driver, config_municipio_estado.estado, tempo_espera=30)
+    # util_selenium.aguardar_elemento_por_texto(driver, config_municipio_estado.estado, tempo_espera=30)
     util_selenium.aguardar_elemento_por_texto(driver, "TODOS", tempo_espera=30)
 
     util_selenium.selecionar_dropdown_por_label(driver, "Ano", ano)
@@ -88,8 +165,7 @@ def sequencia_portal(mes, ano):
     print(f"Setores disponíveis: {listaSetores}")
 
     # Agora para cada setor precisamos "liberar" a codificação:
-    for setor in listaSetores:
-        print(f"Liberando codificação para o setor: {setor}")
+    for setor in listaSetores:        
         util_selenium.selecionar_dropdown_por_label(driver, "Controle", setor)
         util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Filtrar")
         # Acho que uns 2 segundos é suficiente para carregar:

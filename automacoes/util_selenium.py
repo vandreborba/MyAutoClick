@@ -568,3 +568,71 @@ def selecionar_select2_por_label(driver, texto_label, valor, tempo_espera=10):
     except Exception as erro:
         logger.error(f"Não foi possível selecionar '{valor}' no Select2 '{texto_label}': {erro}")
         return False
+
+def verificar_texto_presente(driver, texto):
+    """
+    Verifica imediatamente se um determinado texto está presente no corpo da página.
+    Retorna True se encontrar, False caso contrário.
+    Parâmetros:
+        driver: Instância do WebDriver.
+        texto: Texto a ser procurado na página.
+    """
+    try:
+        corpo = driver.find_element(By.TAG_NAME, 'body').text
+        if texto.lower() in corpo.lower():
+            logger.info(f"Texto '{texto}' encontrado na página.")
+            return True
+        else:
+            logger.info(f"Texto '{texto}' NÃO encontrado na página.")
+            return False
+    except Exception as erro:
+        logger.error(f"Erro ao buscar texto na página: {erro}")
+        return False
+
+def verificar_texto_presente_timeout(driver, texto, tempo_espera=10):
+    """
+    Verifica se um texto está presente na página dentro de um tempo máximo (timeout).
+    Retorna True se encontrar, False se não encontrar no tempo estipulado.
+    Parâmetros:
+        driver: Instância do WebDriver.
+        texto: Texto a ser procurado na página.
+        tempo_espera: Tempo máximo de espera em segundos (padrão: 10).
+    """
+    import time
+    tempo_inicial = time.time()
+    while time.time() - tempo_inicial < tempo_espera:
+        try:
+            corpo = driver.find_element(By.TAG_NAME, 'body').text
+            if texto.lower() in corpo.lower():
+                logger.info(f"Texto '{texto}' encontrado na página.")
+                return True
+        except Exception as erro:
+            logger.error(f"Erro ao buscar texto na página: {erro}")
+        time.sleep(0.5)
+    logger.info(f"Texto '{texto}' NÃO encontrado na página após {tempo_espera} segundos.")
+    return False
+
+def aguardar_textos_na_pagina(driver, lista_textos, tempo_espera=30):
+    """
+    Aguarda até que um dos textos especificados apareça na página ou até o tempo limite.
+    Retorna o texto encontrado ou None se nenhum for encontrado no tempo.
+    Parâmetros:
+        driver: Instância do WebDriver.
+        lista_textos: Lista de textos a serem procurados.
+        tempo_espera: Tempo máximo de espera em segundos (padrão: 30).
+    """
+    import time
+    tempo_inicial = time.time()
+    while time.time() - tempo_inicial < tempo_espera:
+        try:
+            corpo = driver.find_element(By.TAG_NAME, 'body').text.lower()
+            for texto in lista_textos:
+                if texto.lower() in corpo:
+                    logger.info(f"Texto '{texto}' encontrado na página.")
+                    return texto
+        except Exception as erro:
+            logger.error(f"Erro ao buscar textos na página: {erro}")
+        time.sleep(0.5)
+    logger.info(f"Nenhum dos textos {lista_textos} encontrado após {tempo_espera} segundos.")
+    return None
+

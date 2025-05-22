@@ -7,11 +7,10 @@ import hashlib
 import getpass
 import platform
 import uuid
+import json
 
 # Caminho do diretório oculto para arquivos do programa
 CAMINHO_DIRETORIO_OCULTO = os.path.join(os.path.expanduser('~'), '.myibgeautoclicker')
-# Caminho do arquivo de credenciais criptografadas
-CAMINHO_ARQUIVO_CREDENCIAIS = os.path.join(CAMINHO_DIRETORIO_OCULTO, 'credenciais')
 # Caminho do arquivo da chave de criptografia (oculto)
 CAMINHO_ARQUIVO_CHAVE = os.path.join(CAMINHO_DIRETORIO_OCULTO, 'chave_criptografia')
 
@@ -178,48 +177,76 @@ def aguardar_carregamento_pagina(
             print(f"Argumentos: {e.args}")
             return False
 
-def salvar_credenciais_criptografadas(login, senha):
+def caminho_arquivo_credenciais(nome_sistema):
     """
-    Salva o login e a senha criptografados em um arquivo local.
+    Gera o caminho do arquivo de credenciais criptografadas para o sistema informado.
+    """
+    if not nome_sistema:
+        # Caminho padrão se não especificar sistema
+        return os.path.join(CAMINHO_DIRETORIO_OCULTO, 'credenciais')
+    nome_sistema = nome_sistema.lower().replace(' ', '_')
+    return os.path.join(CAMINHO_DIRETORIO_OCULTO, f'credenciais_{nome_sistema}')
+
+
+def salvar_credenciais_criptografadas(login, senha, nome_sistema=""):
+    """
+    Salva o login e a senha criptografados em um único arquivo local, separando por sistema.
     """
     chave = carregar_chave_criptografia()
     fernet = Fernet(chave)
-    dados = f"{login}\n{senha}".encode('utf-8')
+    credenciais = {}
+    caminho = caminho_arquivo_credenciais("")  # sempre arquivo único
+    # Carrega credenciais existentes
+    if os.path.exists(caminho):
+        try:
+            with open(caminho, 'rb') as arquivo:
+                dados_criptografados = arquivo.read()
+                dados = fernet.decrypt(dados_criptografados).decode('utf-8')
+                credenciais = json.loads(dados)
+        except Exception:
+            credenciais = {}
+    # Atualiza ou adiciona credencial do sistema
+    credenciais[nome_sistema] = {'login': login, 'senha': senha}
+    dados = json.dumps(credenciais).encode('utf-8')
     dados_criptografados = fernet.encrypt(dados)
-    with open(CAMINHO_ARQUIVO_CREDENCIAIS, 'wb') as arquivo:
+    with open(caminho, 'wb') as arquivo:
         arquivo.write(dados_criptografados)
 
-def carregar_credenciais_criptografadas():
+
+def carregar_credenciais_criptografadas(nome_sistema=""):
     """
-    Carrega o login e a senha criptografados do arquivo local.
+    Carrega o login e a senha criptografados do arquivo local do sistema.
     Retorna uma tupla (login, senha) ou (None, None) se não existir.
     """
-    if not os.path.exists(CAMINHO_ARQUIVO_CREDENCIAIS):
+    caminho = caminho_arquivo_credenciais("")  # sempre arquivo único
+    if not os.path.exists(caminho):
         return None, None
     chave = carregar_chave_criptografia()
     fernet = Fernet(chave)
-    with open(CAMINHO_ARQUIVO_CREDENCIAIS, 'rb') as arquivo:
+    with open(caminho, 'rb') as arquivo:
         dados_criptografados = arquivo.read()
     try:
         dados = fernet.decrypt(dados_criptografados).decode('utf-8')
-        login, senha = dados.split('\n', 1)
-        return login, senha
+        credenciais = json.loads(dados)
+        if nome_sistema in credenciais:
+            return credenciais[nome_sistema]['login'], credenciais[nome_sistema]['senha']
+        else:
+            return None, None
     except Exception as erro:
         print(f"[ERRO] Não foi possível descriptografar as credenciais: {erro}")
         return None, None
 
+
 def solicitar_credenciais(nome_sistema=""):
     """
     Solicita ao usuário o login e a senha, com opção de salvar e reutilizar as credenciais criptografadas.
-
     Retorna:
         tuple: Uma tupla contendo o login e a senha fornecidos pelo usuário.
     """
-    # Tenta carregar credenciais salvas
-    login, senha = carregar_credenciais_criptografadas()
+    # Tenta carregar credenciais salvas para o sistema
+    login, senha = carregar_credenciais_criptografadas(nome_sistema)
     if login and senha:
         return login, senha
-    
     # Solicita o login ao usuário
     login = pyautogui.prompt(f"Digite seu login para acessar o sistema {nome_sistema}:")
     # Solicita a senha ao usuário
@@ -227,7 +254,7 @@ def solicitar_credenciais(nome_sistema=""):
     # Pergunta se deseja salvar as credenciais
     salvar = pyautogui.confirm(text="Deseja salvar estas credenciais criptografadas para uso futuro?", buttons=["Sim", "Não"])
     if salvar == "Sim":
-        salvar_credenciais_criptografadas(login, senha)
+        salvar_credenciais_criptografadas(login, senha, nome_sistema)
         print("[INFO] Credenciais salvas com criptografia.")
     return login, senha
 
