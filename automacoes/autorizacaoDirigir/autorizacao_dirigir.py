@@ -1,13 +1,39 @@
 import os
+import time
 
-from automacoes import util_selenium
+from automacoes import util_selenium, utils
 from automacoes.autorizacaoDirigir import filtro_autorizacao_dirigir
+from selenium.webdriver.common.by import By
 
 # Caminho do arquivo onde a lista de SIAPEs será salva (pasta do usuário)
 CAMINHO_ARQUIVO_SIAPES = os.path.join(os.path.expanduser('~'), 'SIAPES_MOTORISTAS.TXT')
 
 # Variável global para armazenar a lista de SIAPEs
 lista_siapes = []
+
+def acessarSda(driver):
+    """
+    Acessa o portal web do IBGE, navega até o SDA e realiza o login, se necessário.
+    Preenche os campos de usuário e senha e clica nos botões de login.
+    """
+    url_portal_web = "https://portalweb.ibge.gov.br/"
+    driver.get(url_portal_web)
+    # Clica no menu principal, aguardando o login se necessário
+    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Sistemas Administrativos", tempo_espera=180)
+    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "SDA")
+    # Alterna para a nova aba aberta, caso o clique abra em nova aba
+    util_selenium.alternar_para_ultima_aba(driver)    
+    # Aqui pode acontecer de pedir o login: (ou sempre?)
+    util_selenium.aguardar_elemento_por_texto(driver, "Usuário da Rede", tempo_espera=20)
+    (login, senha) = utils.solicitar_credenciais("Portalweb")
+    # Preenche diretamente os campos de usuário e senha usando seletores robustos    
+    # Preenche o campo de usuário utilizando o novo nome identificado no HTML
+    util_selenium.preencher_campo(driver, (By.NAME, "frmPortal-conteudo:j_idt133"), login)
+    # Preenche o campo de senha normalmente pelo ID
+    util_selenium.preencher_campo(driver, (By.ID, "frmPortal-conteudo:cmpSenha"), senha)
+    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Logar", tempo_espera=20)
+    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Ciente", tempo_espera=20)
+    time.sleep(3)  # Espera um pouco para garantir que a página carregou completamente
 
 def iniciarSequencia():
     """
@@ -16,14 +42,8 @@ def iniciarSequencia():
     """
     global driver
 
-    url_portal_web = "https://portalweb.ibge.gov.br/"
-    driver.get(url_portal_web)
-    # Clica no menu principal, aguardando o login se necessário
-    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Sistemas Administrativos", tempo_espera=180)
-    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "SDA")
-    # Alterna para a nova aba aberta, caso o clique abra em nova aba
-    util_selenium.alternar_para_ultima_aba(driver)    
-    # Aqui pode acontecer de pedir o login:
+    acessarSda(driver)
+
     # cada hora o SDA abre de uma forma parece... tem que ver se tem o Autorização para Dirigir        
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "GESTÃO E LOGÍSTICA", tempo_espera=5)
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Autorização para Dirigir", tempo_espera=180)
@@ -34,8 +54,6 @@ def iniciarSequencia():
     # Ele irá baixar um .xlsx na pasta Downloads, com todos os motoristas.
     filtro_autorizacao_dirigir.filtrar(lista_siapes)
     driver.quit()
-
-
 
 def solicitar_lista_siapes():
     """
@@ -48,7 +66,9 @@ def solicitar_lista_siapes():
         with open(CAMINHO_ARQUIVO_SIAPES, 'r', encoding='utf-8') as f:
             lista_siapes = [linha.strip() for linha in f if linha.strip()]
     if lista_siapes:
-        print(f"Lista de SIAPEs atual: {lista_siapes}")
+        # Exibe a lista de SIAPEs atual de forma amigável, sem colchetes ou aspas
+        print("Lista de SIAPEs atual:")
+        print(", ".join(lista_siapes))
         usar_atual = input("Deseja usar a lista atual de SIAPEs? (s/n): ").strip().lower()
         if usar_atual == 's':
             return lista_siapes
@@ -60,7 +80,10 @@ def solicitar_lista_siapes():
     with open(CAMINHO_ARQUIVO_SIAPES, 'w', encoding='utf-8') as f:
         for siape in lista_siapes:
             f.write(siape + '\n')
-    print(f"Lista de SIAPEs definida: {lista_siapes}")
+    # Exibe a lista de SIAPEs de forma mais amigável para o usuário
+    print("Lista de SIAPEs definida:")
+    for idx, siape in enumerate(lista_siapes, start=1):
+        print(f"  {idx}. {siape}")
     return lista_siapes
 
 def executar():

@@ -3,6 +3,7 @@ import pandas  # Garante inclusão do pandas no build do PyInstaller
 from automacoes import relatorioMensais
 from automacoes.autorizacaoDirigir import autorizacao_dirigir
 from automacoes.pnadC import baixarQuestionario, cancelarCodificacao, liberarCodificacao
+from automacoes.pnadC import associarEntrevistas
 import sys
 
 '''
@@ -12,6 +13,9 @@ import sys
 
 #############
 '''
+
+# Número da versão do sistema
+VERSAO_SISTEMA = "0.4"
 
 
 def limpar_credenciais_criptografadas():
@@ -36,21 +40,23 @@ def mostrar_menu():
     """
     Exibe o menu principal do My IBGE Auto Clicker com formatação visual aprimorada.
     """
-    print("\n" + "="*50)
-    print("      \033[1;36mBem-vindo ao My IBGE Auto Clicker\033[0m")
+    print("\n" + "="*50)    
+    print(f"      \033[1;36mBem-vindo ao My IBGE Auto Clicker v{VERSAO_SISTEMA}\033[0m")    
     print("="*50)
+    print(f"\033[0;90m\nAtenção: Usar somente em rede da agência.\033[0m")
     print("\n\033[1;33mMENU PRINCIPAL\033[0m\n")
-    print("\033[1;32m1.\033[0m  \033[1mDownload Relatórios Mensais\033[0m")
+    print("\033[1;32m1.\033[0m  Download Relatórios Mensais")
     print("\n\033[1;34m--- PnadC ---\033[0m")
-    print("\033[1;32m2.\033[0m  Liberar Codificação")    
+    print("\033[1;32m2.\033[0m  Liberar Codificação (Todos)")    
     print("\033[1;32m3.\033[0m  Cancelar Codificação")
     print("\033[1;32m4.\033[0m  Baixar Questionário")
+    print("\033[1;32m5.\033[0m  Associar Entrevistas")
     
     print("\n\033[1;34m--- Administração ---\033[0m")
-    print("\033[1;32m5.\033[0m  Relatório de Autorização para Dirigir")
+    print("\033[1;32m10.\033[0m  Relatório de Autorização para Dirigir")    
     print("\n\033[1;34m--- Outros ---\033[0m")
-    print("\033[1;32m8.\033[0m  Configurar Município e Estado")
-    print("\033[1;32m9.\033[0m  Limpar credenciais salvas")
+    print("\033[1;32m98.\033[0m  Configurar Município e Estado")
+    print("\033[1;32m99.\033[0m  Limpar credenciais salvas")
     print("\033[1;31m0.\033[0m  Sair")
     print("="*50)
 
@@ -70,8 +76,10 @@ def executar_opcao(opcao):
     elif str(opcao) == "4":
         baixarQuestionario.executar()
     elif str(opcao) == "5":
-        autorizacao_dirigir.executar()
-    elif str(opcao) == "8":
+        associarEntrevistas.executar()
+    elif str(opcao) == "10":
+        autorizacao_dirigir.executar()    
+    elif str(opcao) == "98":
         print("\n--- Configuração de Município e Estado ---")
         print(f"Estado atual: {config_municipio_estado.estado}")
         print(f"Município atual: {config_municipio_estado.municipio}")
@@ -83,7 +91,7 @@ def executar_opcao(opcao):
             config_municipio_estado.municipio = novo_municipio
         config_municipio_estado.salvar()
         print("[SUCESSO] Configuração salva!")
-    elif str(opcao) == "9":
+    elif str(opcao) == "99":
         limpar_credenciais_criptografadas()
     elif str(opcao) == "0":
         print("\nSaindo do programa...")

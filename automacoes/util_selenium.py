@@ -636,3 +636,66 @@ def aguardar_textos_na_pagina(driver, lista_textos, tempo_espera=30):
     logger.info(f"Nenhum dos textos {lista_textos} encontrado após {tempo_espera} segundos.")
     return None
 
+def preencher_campo_por_label(driver, texto_label, valor, tipo_input='text', tempo_espera=10):
+    """
+    Preenche um campo de input associado a um label com o texto especificado.
+    Procura o label pelo texto, localiza o input relacionado (mesmo bloco visual) e preenche o valor.
+    Parâmetros:
+        driver: Instância do WebDriver.
+        texto_label: Texto exato do label (ex: 'Usuário da Rede', 'Senha').
+        valor: Valor a ser preenchido no campo.
+        tipo_input: 'text' ou 'password' (opcional, para restringir o tipo de input).
+        tempo_espera: Tempo máximo de espera em segundos.
+    Retorno:
+        bool: True se o campo foi preenchido com sucesso, False caso contrário.
+    """
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    import time
+
+    try:
+        # Localiza o label pelo texto
+        label_xpath = f"//span[contains(@class, 'nomeCampoObrigatorio') and normalize-space(text())='{texto_label}']"
+        label_element = WebDriverWait(driver, tempo_espera).until(
+            EC.visibility_of_element_located((By.XPATH, label_xpath))
+        )
+        # Sobe para o container do label e desce para o input
+        box_div = label_element.find_element(By.XPATH, "../../..")
+        # Busca o input dentro do mesmo bloco visual
+        if tipo_input == 'password':
+            input_element = box_div.find_element(By.XPATH, 
+                ".//input[@type='password']")
+        else:
+            input_element = box_div.find_element(By.XPATH, 
+                ".//input[@type='text' or not(@type)]")
+        input_element.clear()
+        input_element.send_keys(valor)
+        logger.info(f"Campo '{texto_label}' preenchido com sucesso.")
+        return True
+    except Exception as erro:
+        logger.error(f"Não foi possível preencher o campo '{texto_label}': {erro}")
+        return False
+
+def selecionar_opcoes_select_por_prefixo(driver, id_select, lista_prefixos):
+    """
+    Seleciona todas as opções de um <select multiple> cujo texto começa com qualquer um dos prefixos informados.
+    Parâmetros:
+        driver: Instância do WebDriver.
+        id_select: ID do elemento <select>.
+        lista_prefixos: Lista de strings com os prefixos desejados.
+    """
+    from selenium.webdriver.support.ui import Select
+    from selenium.webdriver.common.by import By
+    # Localiza o elemento select pelo ID
+    select_element = driver.find_element(By.ID, id_select)
+    select = Select(select_element)
+    total_selecionados = 0
+    for option in select.options:
+        for prefixo in lista_prefixos:
+            if option.text.startswith(prefixo):
+                option.click()  # Seleciona a opção
+                total_selecionados += 1
+                break  # Não precisa checar outros prefixos para esta opção
+    print(f"[INFO] Total de opções selecionadas no select '{id_select}': {total_selecionados}")
+

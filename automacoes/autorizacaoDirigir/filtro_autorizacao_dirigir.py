@@ -4,11 +4,12 @@ import time
 import pandas as pd
 import datetime
 
-def obter_arquivo_relatorio_mais_recente(pasta_downloads=None, timeout=30, aguardar_download=True):
+def obter_arquivo_relatorio_mais_recente(pasta_downloads=None, timeout=120, aguardar_download=True, minutos_max=30):
     """
     Procura o arquivo mais recente que começa com 'RelValidadeCNH' e termina com .xls ou .xlsx na pasta Downloads.
     Aguarda até o arquivo aparecer ou até o tempo limite (timeout).
     Se aguardar_download=True, espera o arquivo ser baixado completamente (sem .crdownload).
+    Só retorna arquivos modificados nos últimos 'minutos_max' minutos.
     Retorna o caminho do arquivo encontrado ou None.
     """
     if not pasta_downloads:
@@ -20,6 +21,9 @@ def obter_arquivo_relatorio_mais_recente(pasta_downloads=None, timeout=30, aguar
         arquivos = glob.glob(padrao)
         # Remove arquivos temporários de download
         arquivos_validos = [a for a in arquivos if not a.endswith('.crdownload') and os.path.exists(a)]
+        # Filtra por data de modificação (últimos minutos_max minutos)
+        agora = time.time()
+        arquivos_validos = [a for a in arquivos_validos if (agora - os.path.getmtime(a)) <= minutos_max*60]
         if arquivos_validos:
             # Seleciona o arquivo mais recente
             arquivo_encontrado = max(arquivos_validos, key=os.path.getctime)
@@ -32,8 +36,8 @@ def obter_arquivo_relatorio_mais_recente(pasta_downloads=None, timeout=30, aguar
             else:
                 break
         else:
-            print("[INFO] Nenhum arquivo de relatório encontrado ainda. Aguardando...")
-        time.sleep(1)  # Aguarda 1 segundo antes de tentar novamente
+            print("[INFO] Nenhum arquivo de relatório recente encontrado ainda. Aguardando...")
+        time.sleep(5)  # Aguarda 1 segundo antes de tentar novamente
     if not arquivo_encontrado or not os.path.exists(arquivo_encontrado):
         print("[ERRO] Arquivo de relatório não encontrado ou não disponível para leitura.")
         return None

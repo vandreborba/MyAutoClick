@@ -114,22 +114,27 @@ def clicar_todos_botoes_bloqueado(driver):
     Busca todos os elementos <label> com a classe 'btn-danger' e texto 'Bloqueado' e clica neles.
     Parâmetros:
         driver: Instância do WebDriver.
+    Retorna:
+        int: Quantidade de botões 'Bloqueado' clicados com sucesso.
     """
     from selenium.webdriver.common.by import By
     import time
     # Busca todos os elementos <label> com a classe 'btn-danger' e texto 'Bloqueado'
     botoes_bloqueado = driver.find_elements(By.XPATH, "//label[contains(@class, 'btn-danger') and contains(text(), 'Bloqueado')]")
     print(f"[INFO] Encontrados {len(botoes_bloqueado)} botões 'Bloqueado' para liberar.")
+    total_clicados = 0  # Contador de botões clicados
     for indice, botao in enumerate(botoes_bloqueado, start=1):
         try:
             # Rola até o botão para garantir visibilidade
             driver.execute_script("arguments[0].scrollIntoView(true);", botao)
             botao.click()
             print(f"[SUCESSO] Botão 'Bloqueado' {indice} liberado com sucesso.")
+            total_clicados += 1  # Incrementa o contador
             # Pequena pausa para evitar problemas de sincronização
             time.sleep(0.5)
         except Exception as erro:
             print(f"[ERRO] Não foi possível clicar no botão 'Bloqueado' {indice}: {erro}")
+    return total_clicados  # Retorna o total de botões clicados
 
 def sequencia_portal(mes, ano):
     global driver
@@ -142,8 +147,6 @@ def sequencia_portal(mes, ano):
 
     # Vamos tentr acessar a URL diretamente agora:
     driver.get(urlLiberarCodificacao)
-
-    # se aparecer "Login Integrado", vamos digitar o login e senha automaticamente
     
 
     # tem que aguardar o carregamento: Aguardar aparecer o estado e município configurados
@@ -164,6 +167,8 @@ def sequencia_portal(mes, ano):
     listaSetores = [setor['texto'] for setor in listaSetores]
     print(f"Setores disponíveis: {listaSetores}")
 
+    total_liberado = 0  # Contador total de entrevistas liberadas
+
     # Agora para cada setor precisamos "liberar" a codificação:
     for setor in listaSetores:        
         util_selenium.selecionar_dropdown_por_label(driver, "Controle", setor)
@@ -175,11 +180,11 @@ def sequencia_portal(mes, ano):
             print(f"[INFO] Nenhum para liberar para o setor: {setor}")
             util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btnMenuFiltro"))
             time.sleep(1)
-
             continue
         else:            
             # Função para clicar em todos os botões "Bloqueado" e liberar os domicílios
-            clicar_todos_botoes_bloqueado(driver)
+            liberados_setor = clicar_todos_botoes_bloqueado(driver)
+            total_liberado += liberados_setor  # Soma ao total geral
             # Após liberar, clicar no botão de submit para efetivar as liberações
             util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btnSubmit"))
             # Aparece uma mensagem de confirmação após o carregamento, clicar em "OK"  ou apertar ESC                                  
@@ -193,8 +198,9 @@ def sequencia_portal(mes, ano):
 
         # Depois que percorreu tudo do setor, tem que clicar em Expandir Filtro, para aparecer o menu novamente:        
                 
-
-
+    # Exibe mensagem final com o total de entrevistas liberadas, usando cor verde no terminal
+    print(f"\033[92mLiberado {total_liberado} entrevistas para codificação\033[0m")
+    # Comentário: \033[92m é o código ANSI para verde, \033[0m reseta a cor.
 
 def executar():
     global driver  
@@ -205,6 +211,7 @@ def executar():
     if not mes or not ano:
         return
     
+    utils.solicitar_credenciais("Portalweb")
     driver = util_selenium.inicializar_webdriver_com_perfil()
     sequencia_portal(mes, ano)
 
