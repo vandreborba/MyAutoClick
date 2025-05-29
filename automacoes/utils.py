@@ -251,11 +251,9 @@ def solicitar_credenciais(nome_sistema=""):
     login = pyautogui.prompt(f"Digite seu login para acessar o sistema {nome_sistema}:")
     # Solicita a senha ao usuário
     senha = pyautogui.password(f"Digite sua senha para acessar o sistema {nome_sistema}:")
-    # Pergunta se deseja salvar as credenciais
-    salvar = pyautogui.confirm(text="Deseja salvar estas credenciais criptografadas para uso futuro?", buttons=["Sim", "Não"])
-    if salvar == "Sim":
-        salvar_credenciais_criptografadas(login, senha, nome_sistema)
-        print("[INFO] Credenciais salvas com criptografia.")
+    # Salvar credenciais criptografadas
+    salvar_credenciais_criptografadas(login, senha, nome_sistema)
+    print("[INFO] Credenciais salvas com criptografia.")
     return login, senha
 
 def pressionar_tab(vezes):

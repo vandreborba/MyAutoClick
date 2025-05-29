@@ -2,6 +2,7 @@ import os
 import time
 
 from automacoes import util_selenium, utils
+from automacoes.accesoSistemas import acessarSda
 from automacoes.autorizacaoDirigir import filtro_autorizacao_dirigir
 from selenium.webdriver.common.by import By
 
@@ -10,30 +11,6 @@ CAMINHO_ARQUIVO_SIAPES = os.path.join(os.path.expanduser('~'), 'SIAPES_MOTORISTA
 
 # Variável global para armazenar a lista de SIAPEs
 lista_siapes = []
-
-def acessarSda(driver):
-    """
-    Acessa o portal web do IBGE, navega até o SDA e realiza o login, se necessário.
-    Preenche os campos de usuário e senha e clica nos botões de login.
-    """
-    url_portal_web = "https://portalweb.ibge.gov.br/"
-    driver.get(url_portal_web)
-    # Clica no menu principal, aguardando o login se necessário
-    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Sistemas Administrativos", tempo_espera=180)
-    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "SDA")
-    # Alterna para a nova aba aberta, caso o clique abra em nova aba
-    util_selenium.alternar_para_ultima_aba(driver)    
-    # Aqui pode acontecer de pedir o login: (ou sempre?)
-    util_selenium.aguardar_elemento_por_texto(driver, "Usuário da Rede", tempo_espera=20)
-    (login, senha) = utils.solicitar_credenciais("Portalweb")
-    # Preenche diretamente os campos de usuário e senha usando seletores robustos    
-    # Preenche o campo de usuário utilizando o novo nome identificado no HTML
-    util_selenium.preencher_campo(driver, (By.NAME, "frmPortal-conteudo:j_idt133"), login)
-    # Preenche o campo de senha normalmente pelo ID
-    util_selenium.preencher_campo(driver, (By.ID, "frmPortal-conteudo:cmpSenha"), senha)
-    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Logar", tempo_espera=20)
-    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Ciente", tempo_espera=20)
-    time.sleep(3)  # Espera um pouco para garantir que a página carregou completamente
 
 def iniciarSequencia():
     """

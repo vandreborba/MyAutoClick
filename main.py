@@ -9,13 +9,13 @@ import sys
 '''
 #############
 
-- Falta criar o de associar entrevista ao DMC.
+- Criar o cadastro do rev. sev.
 
 #############
 '''
 
 # Número da versão do sistema
-VERSAO_SISTEMA = "0.4"
+VERSAO_SISTEMA = "0.7"
 
 
 def limpar_credenciais_criptografadas():
@@ -43,13 +43,14 @@ def mostrar_menu():
     print("\n" + "="*50)    
     print(f"      \033[1;36mBem-vindo ao My IBGE Auto Clicker v{VERSAO_SISTEMA}\033[0m")    
     print("="*50)
-    print(f"\033[0;90m\nAtenção: Usar somente em rede da agência.\033[0m")
+    print(f"\033[0;90mInstruções: \n- Este programa automatiza algumas atividades usando o navegador de forma autônoma,\nporém algumas vezes é necessário fazer login manualmente nos sistemas.\n- Usar somente em rede da agência.\033[0m")
     print("\n\033[1;33mMENU PRINCIPAL\033[0m\n")
+    print("\n\033[1;34m--- Econômicas ---\033[0m")
     print("\033[1;32m1.\033[0m  Download Relatórios Mensais")
     print("\n\033[1;34m--- PnadC ---\033[0m")
     print("\033[1;32m2.\033[0m  Liberar Codificação (Todos)")    
-    print("\033[1;32m3.\033[0m  Cancelar Codificação")
-    print("\033[1;32m4.\033[0m  Baixar Questionário")
+    print("\033[1;32m3.\033[0m  Cancelar Liberação Codificação")
+    print("\033[1;32m4.\033[0m  Baixar Questionários")
     print("\033[1;32m5.\033[0m  Associar Entrevistas")
     
     print("\n\033[1;34m--- Administração ---\033[0m")
@@ -105,7 +106,7 @@ def main():
     # Aviso sobre o Chrome Portable
     from automacoes.util_selenium import CAMINHO_CHROME_PORTABLE
     if not os.path.exists(CAMINHO_CHROME_PORTABLE):
-        print("\n\033[1;31mATENÇÃO:\033[0m Para automação funcionar corretamente, baixe a versão 124 do Google Chrome Portable e extraia na área de trabalho, na pasta 'GoogleChromePortable'.\nO executável deve estar em: 'GoogleChromePortable/App/Chrome-bin/chrome.exe'\nLink recomendado: https://portableapps.com/apps/internet/google_chrome_portable (verifique a versão 124)")
+        print("\n\033[1;31mATENÇÃO:\033[0m Para automação funcionar corretamente, baixe a versão 135 do Google Chrome Portable e extraia na área de trabalho, na pasta 'GoogleChromePortable'.\nO executável deve estar em: 'GoogleChromePortable/App/Chrome-bin/chrome.exe'\nLink recomendado: https://portableapps.com/apps/internet/google_chrome_portable (verifique a versão 124)")
     # Verifica se foi passado argumento na linha de comando
     if len(sys.argv) > 1:
         argumento = sys.argv[1]

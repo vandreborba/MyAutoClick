@@ -34,8 +34,8 @@ def inicializar_webdriver():
 
 def inicializar_webdriver_com_perfil():
     """
-    Inicializa o WebDriver do Selenium utilizando um diretório de perfil exclusivo para automação,
-    conforme recomendado para ChromeDriver v136+.
+    Inicializa o WebDriver do Selenium utilizando um diretório de perfil exclusivo para automação.
+    Se o Chrome Portable estiver disponível, utiliza-o; caso contrário, utiliza o Chrome padrão do sistema.
     O usuário pode logar uma vez nesse perfil e a sessão será mantida nas próximas execuções.
 
     Retorna:
@@ -51,16 +51,19 @@ def inicializar_webdriver_com_perfil():
     opcoes.add_argument("--profile-directory=Default")
     opcoes.add_argument('--disable-extensions')
     opcoes.add_argument('--no-sandbox')    
-    #opcoes.add_argument('--disable-gpu')
-    #opcoes.add_argument('--disable-software-rasterizer')
-    #opcoes.add_argument('--disable-dev-shm-usage')
     if not EXIBIR_LOGS_CHROMEDRIVER:
         opcoes.add_argument('--log-level=4')  # Minimiza logs do Chrome
-    # Configuração para que o Chrome baixe PDFs sem abrir automaticamente
     prefs = {
         "plugins.always_open_pdf_externally": True
     }
     opcoes.add_experimental_option("prefs", prefs)
+
+    # Se o Chrome Portable existir, usa ele; senão, usa o Chrome padrão
+    if os.path.exists(CAMINHO_CHROME_PORTABLE):
+        opcoes.binary_location = CAMINHO_CHROME_PORTABLE
+        logger.info(f"Chrome Portable detectado e será utilizado: {CAMINHO_CHROME_PORTABLE}")
+    else:
+        logger.info("Chrome Portable não encontrado. Usando Chrome padrão do sistema.")
 
     # Suprime logs do Chromedriver se a constante estiver False
     if EXIBIR_LOGS_CHROMEDRIVER:
