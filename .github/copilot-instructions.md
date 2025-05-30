@@ -23,6 +23,9 @@
 - **Centralização de Funções:** Todas as funções relacionadas ao Selenium devem ser centralizadas no arquivo `util_selenium.py` para facilitar a reutilização e manutenção.
 - **Boas Práticas:** Utilize as funções de `util_selenium.py` sempre que possível para evitar duplicação de código.
 
+## Imports
+- **Localização:** Sempre coloque todos os imports no início do arquivo, exceto quando houver uma justificativa técnica clara para importar dentro de funções (ex: evitar dependências circulares, otimizar carregamento condicional, etc.).
+
 # Para compilar o projeto e gerar um único arquivo .exe na pasta 'dist' e copiar para a área de trabalho, execute:
 #
 # Opção recomendada (PowerShell):
@@ -32,3 +35,5 @@
 #
 # O executável será gerado na pasta 'dist' do projeto e uma cópia será feita para a área de trabalho.
 # Utilize este comando sempre que solicitar a compilação do projeto com ícone personalizado.
+#
+# Ao compilar o projeto (gerar o .exe), atualize automaticamente o valor de VERSAO_SISTEMA no arquivo main.py, incrementando o número após o ponto (exemplo: de "0.8" para "0.9"). Isso deve ser feito antes da etapa de compilação para garantir que o executável reflita a versão mais recente.

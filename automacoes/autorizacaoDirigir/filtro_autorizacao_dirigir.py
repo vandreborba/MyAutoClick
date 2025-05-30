@@ -92,7 +92,9 @@ def processar_dados(dados, siapes):
 
     # Exibe e salva os resultados
     print(f'Tabela geral:\n{dados.to_string(index=False)}\n\n\n\n')
-    dados.to_excel('Vencimento Carteiras.xlsx', index=False)
+    # Salva o arquivo Excel no Desktop do usuário
+    caminho_desktop = os.path.join(os.path.expanduser('~'), 'Desktop', 'Vencimento Carteiras.xlsx')
+    dados.to_excel(caminho_desktop, index=False)
     # Copia o conteúdo do DataFrame para a área de transferência, facilitando a colagem no Excel
     dados.to_clipboard(index=False, excel=True)
     print('Conteúdo do relatório copiado para a área de transferência (formato Excel).')

@@ -15,8 +15,15 @@ import sys
 '''
 
 # Número da versão do sistema
-VERSAO_SISTEMA = "0.7"
+VERSAO_SISTEMA = "0.8"
 
+# INSTRUÇÕES DE USO DO SISTEMA
+INSTRUCOES_SISTEMA = '''
+- Este programa automatiza algumas atividades usando o navegador de forma autônoma,
+  porém algumas vezes é necessário fazer login manualmente nos sistemas.
+- Você pode usar computador enquanto o robô executa as tarefas, mas não minimize o navegador.
+- Usar somente em rede da agência (Computadores da agência).
+'''
 
 def limpar_credenciais_criptografadas():
     """
@@ -43,18 +50,18 @@ def mostrar_menu():
     print("\n" + "="*50)    
     print(f"      \033[1;36mBem-vindo ao My IBGE Auto Clicker v{VERSAO_SISTEMA}\033[0m")    
     print("="*50)
-    print(f"\033[0;90mInstruções: \n- Este programa automatiza algumas atividades usando o navegador de forma autônoma,\nporém algumas vezes é necessário fazer login manualmente nos sistemas.\n- Usar somente em rede da agência.\033[0m")
+    print(f"\033[0;90mInstruções: \n{INSTRUCOES_SISTEMA}\033[0m")
+
     print("\n\033[1;33mMENU PRINCIPAL\033[0m\n")
     print("\n\033[1;34m--- Econômicas ---\033[0m")
-    print("\033[1;32m1.\033[0m  Download Relatórios Mensais")
+    print("\033[1;32m10.\033[0m  Download Relatórios Mensais")
     print("\n\033[1;34m--- PnadC ---\033[0m")
-    print("\033[1;32m2.\033[0m  Liberar Codificação (Todos)")    
-    print("\033[1;32m3.\033[0m  Cancelar Liberação Codificação")
-    print("\033[1;32m4.\033[0m  Baixar Questionários")
-    print("\033[1;32m5.\033[0m  Associar Entrevistas")
-    
+    print("\033[1;32m20.\033[0m  Liberar Codificação (Todos)")    
+    print("\033[1;32m21.\033[0m  Cancelar Liberação Codificação")
+    print("\033[1;32m22.\033[0m  Baixar Questionários")
+    print("\033[1;32m23.\033[0m  Associar Entrevistas")
     print("\n\033[1;34m--- Administração ---\033[0m")
-    print("\033[1;32m10.\033[0m  Relatório de Autorização para Dirigir")    
+    print("\033[1;32m30.\033[0m  Relatório de Autorização para Dirigir")    
     print("\n\033[1;34m--- Outros ---\033[0m")
     print("\033[1;32m98.\033[0m  Configurar Município e Estado")
     print("\033[1;32m99.\033[0m  Limpar credenciais salvas")
@@ -68,17 +75,17 @@ def executar_opcao(opcao):
         opcao (str ou int): Opção escolhida pelo usuário.
     """
     from automacoes.config_municipio_estado import config_municipio_estado
-    if str(opcao) == "1":
+    if str(opcao) == "10":
         relatorioMensais.executar()
-    elif str(opcao) == "2":
+    elif str(opcao) == "20":
         liberarCodificacao.executar()
-    elif str(opcao) == "3":
+    elif str(opcao) == "21":
         cancelarCodificacao.executar()
-    elif str(opcao) == "4":
+    elif str(opcao) == "22":
         baixarQuestionario.executar()
-    elif str(opcao) == "5":
+    elif str(opcao) == "23":
         associarEntrevistas.executar()
-    elif str(opcao) == "10":
+    elif str(opcao) == "30":
         autorizacao_dirigir.executar()    
     elif str(opcao) == "98":
         print("\n--- Configuração de Município e Estado ---")

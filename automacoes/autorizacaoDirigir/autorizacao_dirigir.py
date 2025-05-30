@@ -47,7 +47,8 @@ def solicitar_lista_siapes():
         print("Lista de SIAPEs atual:")
         print(", ".join(lista_siapes))
         usar_atual = input("Deseja usar a lista atual de SIAPEs? (s/n): ").strip().lower()
-        if usar_atual == 's':
+        # Se o usuário pressionar Enter (vazio), assume 's' como padrão
+        if usar_atual == '' or usar_atual == 's':
             return lista_siapes
     # Solicita nova lista
     entrada = input("Informe os SIAPEs separados por vírgula, espaço ou enter: ")
@@ -75,5 +76,5 @@ def executar():
     iniciarSequencia()
 
     # Terminou:
-    # driver.quit()
+    driver.quit()
     print("Automação concluída.")

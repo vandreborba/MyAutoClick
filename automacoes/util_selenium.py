@@ -283,8 +283,7 @@ def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_es
         return True
     else:
         if reiniciar_ao_falhar:
-            logger.info("Atualizando a página e tentando novamente...")
-            driver.refresh()
+            logger.info("Atualizando a página e tentando novamente...")            
             # Aguarda a página recarregar completamente
             try:
                 WebDriverWait(driver, tempo_espera).until(
@@ -298,7 +297,7 @@ def clicar_elemento_por_texto_com_fallback(driver, texto, nome_tag='*', tempo_es
             logger.info("Não irá reiniciar a página após falha, conforme parâmetro reiniciar_ao_falhar=False.")
             return False
 
-def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
+def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10, contem_texto=True):
     """
     Aguarda até que um elemento com o texto especificado esteja presente e visível na página.
 
@@ -307,6 +306,7 @@ def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
         texto: Texto do elemento a ser aguardado.
         nome_tag: Tag HTML do elemento (ex: 'td', 'button'). Use '*' para qualquer tag.
         tempo_espera: Tempo máximo de espera em segundos.
+        contem_texto: Se True, faz correspondência parcial e ignora maiúsculas/minúsculas. Se False, exige correspondência exata (case sensitive).
 
     Retorno:
         elemento: WebElement encontrado ou None se não for localizado.
@@ -317,8 +317,12 @@ def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
 
     logger.info(f"Aguardando elemento com texto '{texto}' e tag '{nome_tag}'...")
     try:
-        # Monta o XPath para buscar o elemento pelo texto
-        xpath = f"//{nome_tag}[contains(normalize-space(text()), '{texto}')]"
+        if contem_texto:
+            # Busca parcial, ignorando maiúsculas/minúsculas
+            xpath = f"//{nome_tag}[contains(translate(normalize-space(text()), 'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÂÊÎÔÛÃÕÀÇ', 'abcdefghijklmnopqrstuvwxyzáéíóúâêîôûãõàç'), '{texto.lower()}')]"
+        else:
+            # Busca exata, case sensitive
+            xpath = f"//{nome_tag}[normalize-space(text())='{texto}']"
         logger.debug(f"XPath utilizado para aguardar: {xpath}")
         elemento = WebDriverWait(driver, tempo_espera).until(
             EC.visibility_of_element_located((By.XPATH, xpath))
@@ -327,12 +331,7 @@ def aguardar_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
         return elemento
     except Exception as erro:
         # Mensagem de erro personalizada para timeout
-        logger.error("""
-Timeout ao aguardar o elemento com texto '{0}' e tag '{1}'.
-Verifique se o elemento realmente existe na página, se o texto está correto ou se há algum problema de carregamento.
-Tempo de espera excedido ({2} segundos).
-Detalhes do erro: {3}
-""".format(texto, nome_tag, tempo_espera, erro))
+        logger.error(f"\nTimeout ao aguardar o elemento com texto '{texto}' e tag '{nome_tag}'.\nVerifique se o elemento realmente existe na página, se o texto está correto ou se há algum problema de carregamento.\nTempo de espera excedido ({tempo_espera} segundos).\nDetalhes do erro: {erro}\n")
         try:
             caminho_print = f"screenshot_erro_aguardar_{texto.replace(' ', '_')}.png"
             driver.save_screenshot(caminho_print)

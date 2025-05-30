@@ -1,12 +1,16 @@
 import time
+from selenium.webdriver.common.keys import Keys
 from automacoes import util_selenium, utils
 from selenium.webdriver.common.by import By
 from automacoes.log_util import obter_logger
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 logger = obter_logger(__name__)
 
 def aguardar_distribuicao_nao_zero(driver, tempo_espera=60):
     """
+    PnadC:
     Aguarda até que o elemento com id 'NaoDistribuido' ou 'Distribuido' tenha valor diferente de zero.
     Útil para garantir que a página carregou os dados de distribuição.
 
@@ -16,10 +20,7 @@ def aguardar_distribuicao_nao_zero(driver, tempo_espera=60):
     Retorno:
         bool: True se algum dos elementos ficou diferente de zero, False se tempo esgotado.
     """
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    import time
+    
 
     logger.info("Aguardando que 'NaoDistribuido' ou 'Distribuido' seja diferente de zero...")
     def condicao(driver):
@@ -101,19 +102,23 @@ def acessarSda(driver):
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "SDA")
     # Alterna para a nova aba aberta, caso o clique abra em nova aba
     util_selenium.alternar_para_ultima_aba(driver)    
-    # Aqui pode acontecer de pedir o login: (ou sempre?)
-    util_selenium.aguardar_elemento_por_texto(driver, "Usuário da Rede", tempo_espera=20)
-    (login, senha) = utils.solicitar_credenciais("Portalweb")
-    # Preenche diretamente os campos de usuário e senha usando seletores robustos    
-    # Preenche o campo de usuário utilizando o novo nome identificado no HTML
-    util_selenium.preencher_campo(driver, (By.NAME, "frmPortal-conteudo:j_idt133"), login)
-    # Preenche o campo de senha normalmente pelo ID
-    util_selenium.preencher_campo(driver, (By.ID, "frmPortal-conteudo:cmpSenha"), senha)
-    # tem que verificar caso de erro de login:
-
-    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Logar", tempo_espera=20)
-    util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Ciente", tempo_espera=20)
-    time.sleep(3)  # Espera um pouco para garantir que a página carregou completamente
+    # Aqui pode acontecer de pedir o login ou não pedir.
+    texto = util_selenium.aguardar_textos_na_pagina(driver, lista_textos=["Usuário da Rede", "INÍCIO"], tempo_espera=20)
+    if (texto == "Usuário da Rede"):    
+        (login, senha) = utils.solicitar_credenciais("Portalweb")
+        time.sleep(2)
+        driver.switch_to.active_element.send_keys(login)
+        util_selenium.preencher_campo(driver, (By.ID, "frmPortal-conteudo:cmpSenha"), senha)
+        util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Logar", tempo_espera=20)
+        util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Ciente", tempo_espera=20)        
+    #todo: tratar caso de erro de senha.
+    if (util_selenium.aguardar_elemento_por_texto(driver, "GESTÃO E LOGÍSTICA", tempo_espera=20, contem_texto=True)):
+        print("[INFO] Acesso ao SDA concluído.")
+    else:
+        # execeção:        
+        print("\033[91m[ERRO] Não foi possível acessar o SDA. Verifique suas credenciais ou a conexão com a internet.\033[0m")
+        driver.quit()
+    
 
 if __name__ == "__main__":
     # Exemplo de teste simples:
