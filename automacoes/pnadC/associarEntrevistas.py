@@ -75,36 +75,35 @@ def iniciar_sequencia_portal(lista_entradas_processada):
     
 def solicitar_lista_setores_domicilios_siape():
     """
-    Solicita ao usuário uma lista de setores, domicílios e SIAPE do entrevistador (separados por espaço, tab ou múltiplos espaços),
-    uma linha por registro. Finaliza com linha vazia.
+    Solicita ao usuário uma lista de setores, domicílios e SIAPE do entrevistador usando interface gráfica centralizada.
     Retorna uma lista de dicionários com as chaves: numero_setor, numero_domicilio, siape_entrevistador.
-    Exemplo de entrada válida:
-        410730605000009 1 1234567
-        410730605000009 2 1234567
-        412625605000054 2 7654321
     """
-    print("Cole a lista de setores, domicílios e SIAPE (numeroSetor numeroDomicilio siapeEntrevistador), separados por espaço ou tabulação, uma linha por registro. Finalize com uma linha vazia:")    
-    print("\nExemplo de entrada:")
-    print("="*50)
-    print("  410730605000009 1 1234567\n  410730605000009 2 1234567\n  412625605000054 2 7654321")
-    print("="*50)
+    from automacoes.caixas_dialogo import solicitar_texto_multilinha, exibir_caixa_dialogo
+    mensagem = (
+        "Cole a lista de setores, domicílios e SIAPE (numeroSetor numeroDomicilio siapeEntrevistador),\n"
+        "separados por espaço ou tabulação, uma linha por registro:\n\nExemplo:\n410730605000009 1 1234567\n410730605000009 2 1234567\n412625605000054 2 7654321"
+    )
+    texto = solicitar_texto_multilinha(
+        titulo="Setores, Domicílios e SIAPE",
+        mensagem=mensagem,
+        texto_exemplo="410730605000009 1 1234567\n410730605000009 2 1234567\n412625605000054 2 7654321"
+    )
     lista_entradas = []
-    while True:
-        linha = input()
-        if not linha.strip():
-            break
-        try:
-            partes = linha.strip().split()
+    if texto:
+        linhas = texto.splitlines()
+        for linha in linhas:
+            if not linha.strip():
+                continue
+            partes = linha.strip().replace("\t", " ").split()
             if len(partes) != 3:
-                raise ValueError("A linha deve conter exatamente 3 campos: setor, domicílio e SIAPE.")
+                exibir_caixa_dialogo("Erro de Formato", f"Linha inválida: {linha}\nUse o formato: numeroSetor numeroDomicilio siapeEntrevistador", tipo="erro")
+                return solicitar_lista_setores_domicilios_siape()
             numero_setor, numero_domicilio, siape_entrevistador = partes
             lista_entradas.append({
                 'numero_setor': numero_setor.strip(),
                 'numero_domicilio': numero_domicilio.strip(),
                 'siape_entrevistador': siape_entrevistador.strip()
             })
-        except Exception:
-            print(f"[ERRO] Linha inválida: {linha}. Use o formato numeroSetor numeroDomicilio siapeEntrevistador.")
     return lista_entradas
 
 def processar_lista_siape_setores(lista_entradas):

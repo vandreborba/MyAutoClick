@@ -11,6 +11,7 @@ import glob
 import pyperclip
 from automacoes.config_municipio_estado import config_municipio_estado
 from automacoes.log_util import obter_logger
+from automacoes.caixas_dialogo import exibir_caixa_dialogo
 
 logger = obter_logger(__name__)
 
@@ -182,7 +183,8 @@ def copiarAreadeTransferencia():
     conteudo_com_tabs = conteudo.replace(';', '\t')
     pyperclip.copy(conteudo_com_tabs)
     logger.info("Conteúdo do relatório unificado copiado para a área de transferência (formato Excel, separador tab).")
-    print("Conteúdo do relatório unificado copiado para a área de transferência.")
+    
+    
 
 def executar():
     global driver, login_usuario, senha_usuario
@@ -196,6 +198,15 @@ def executar():
     juntarArquivosCSV()
     copiarAreadeTransferencia()
     driver.quit()
+    mensagem = (
+        "Conteúdo do relatório unificado copiado para a área de transferência.\n\n"
+        "O arquivo 'relatorio_mensal_unificado.csv' foi salvo na sua pasta Downloads."
+    )
+    exibir_caixa_dialogo(
+        titulo="Relatório Unificado",
+        mensagem=mensagem,
+        tipo="sucesso"
+    )
     logger.info("Automação de relatórios mensais concluída.")
     print("Automação de relatórios mensais concluída.")
 

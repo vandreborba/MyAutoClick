@@ -239,22 +239,10 @@ def carregar_credenciais_criptografadas(nome_sistema=""):
 
 def solicitar_credenciais(nome_sistema=""):
     """
-    Solicita ao usuário o login e a senha, com opção de salvar e reutilizar as credenciais criptografadas.
-    Retorna:
-        tuple: Uma tupla contendo o login e a senha fornecidos pelo usuário.
+    Solicita ao usuário o login e a senha, utilizando a interface gráfica centralizada.
     """
-    # Tenta carregar credenciais salvas para o sistema
-    login, senha = carregar_credenciais_criptografadas(nome_sistema)
-    if login and senha:
-        return login, senha
-    # Solicita o login ao usuário
-    login = pyautogui.prompt(f"Digite seu login para acessar o sistema {nome_sistema}:")
-    # Solicita a senha ao usuário
-    senha = pyautogui.password(f"Digite sua senha para acessar o sistema {nome_sistema}:")
-    # Salvar credenciais criptografadas
-    salvar_credenciais_criptografadas(login, senha, nome_sistema)
-    print("[INFO] Credenciais salvas com criptografia.")
-    return login, senha
+    from automacoes.caixas_dialogo import solicitar_credenciais_interface
+    return solicitar_credenciais_interface(nome_sistema)
 
 def pressionar_tab(vezes):
     """

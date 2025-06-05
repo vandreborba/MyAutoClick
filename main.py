@@ -5,43 +5,41 @@ from automacoes.autorizacaoDirigir import autorizacao_dirigir
 from automacoes.pnadC import baixarQuestionario, cancelarCodificacao, liberarCodificacao
 from automacoes.pnadC import associarEntrevistas
 import sys
+import colorama  # Adiciona suporte a cores ANSI no Windows
+
+# Importa a função para iniciar a interface gráfica
+from automacoes.interface_grafica import iniciar_interface
+from automacoes.config_interface import VERSAO_SISTEMA, INSTRUCOES_SISTEMA, executar_opcao
 
 '''
 #############
 
 - Criar o cadastro do rev. sev.
+- Criar um "retornar entrevistas". Tem que cancelar a codificação, baixar o questionário e associar as entrevistas.
+- Criar um "conferir se a empresa está nas econômicas anuais", o script receberia uma lista de CNPJs e verificaria se estão na base de econômicas anuais, retornando os que estão.
 
 #############
 '''
 
-# Número da versão do sistema
-VERSAO_SISTEMA = "0.8"
-
-# INSTRUÇÕES DE USO DO SISTEMA
-INSTRUCOES_SISTEMA = '''
-- Este programa automatiza algumas atividades usando o navegador de forma autônoma,
-  porém algumas vezes é necessário fazer login manualmente nos sistemas.
-- Você pode usar computador enquanto o robô executa as tarefas, mas não minimize o navegador.
-- Usar somente em rede da agência (Computadores da agência).
-'''
+colorama.init(autoreset=True)  # Inicializa o colorama para garantir cores no terminal Windows
 
 def limpar_credenciais_criptografadas():
     """
-    Remove os arquivos de credenciais e chave de criptografia salvos localmente.
+    Remove os arquivos de credenciais e chave de criptografia salvos localmente e exibe o resultado em caixa de diálogo.
     """
     import os
     from automacoes.utils import CAMINHO_ARQUIVO_CREDENCIAIS, CAMINHO_ARQUIVO_CHAVE
+    from automacoes.caixas_dialogo import exibir_caixa_dialogo
     arquivos_removidos = []
     for caminho in [CAMINHO_ARQUIVO_CREDENCIAIS, CAMINHO_ARQUIVO_CHAVE]:
         if os.path.exists(caminho):
             os.remove(caminho)
             arquivos_removidos.append(caminho)
     if arquivos_removidos:
-        print("\n[INFO] Credenciais e chave de criptografia removidas com sucesso:")
-        for arq in arquivos_removidos:
-            print(f" - {arq}")
+        mensagem = "Credenciais e chave de criptografia removidas com sucesso:\n" + "\n".join(f"- {arq}" for arq in arquivos_removidos)
+        exibir_caixa_dialogo("Limpeza de Credenciais", mensagem, tipo="sucesso")
     else:
-        print("\n[INFO] Nenhum arquivo de credencial ou chave encontrado para remover.")
+        exibir_caixa_dialogo("Limpeza de Credenciais", "Nenhum arquivo de credencial ou chave encontrado para remover.", tipo="info")
 
 def mostrar_menu():
     """
@@ -69,44 +67,9 @@ def mostrar_menu():
     print("="*50)
 
 def executar_opcao(opcao):
-    """
-    Executa a ação correspondente à opção escolhida, seja por argumento ou menu.
-    Parâmetros:
-        opcao (str ou int): Opção escolhida pelo usuário.
-    """
-    from automacoes.config_municipio_estado import config_municipio_estado
-    if str(opcao) == "10":
-        relatorioMensais.executar()
-    elif str(opcao) == "20":
-        liberarCodificacao.executar()
-    elif str(opcao) == "21":
-        cancelarCodificacao.executar()
-    elif str(opcao) == "22":
-        baixarQuestionario.executar()
-    elif str(opcao) == "23":
-        associarEntrevistas.executar()
-    elif str(opcao) == "30":
-        autorizacao_dirigir.executar()    
-    elif str(opcao) == "98":
-        print("\n--- Configuração de Município e Estado ---")
-        print(f"Estado atual: {config_municipio_estado.estado}")
-        print(f"Município atual: {config_municipio_estado.municipio}")
-        novo_estado = input("Digite o novo Estado (ex: 41 - PARANÁ) ou pressione Enter para manter: ").strip()
-        novo_municipio = input("Digite o novo Município (ex: 411520000 - Maringá) ou pressione Enter para manter: ").strip()
-        if novo_estado:
-            config_municipio_estado.estado = novo_estado
-        if novo_municipio:
-            config_municipio_estado.municipio = novo_municipio
-        config_municipio_estado.salvar()
-        print("[SUCESSO] Configuração salva!")
-    elif str(opcao) == "99":
-        limpar_credenciais_criptografadas()
-    elif str(opcao) == "0":
-        print("\nSaindo do programa...")
-        return False
-    else:
-        print("\nOpção inválida! Digite 1, 2, 3, 8, 9 ou 0.")
-    return True
+    # Função movida para automacoes/config_interface.py
+    from automacoes.config_interface import executar_opcao as executar_opcao_interface
+    return executar_opcao_interface(opcao)
 
 def main():    
     executando = True
@@ -130,4 +93,6 @@ def main():
             print("\nErro: Digite um número válido!")
 
 if __name__ == "__main__":
-    main()
+    # Se desejar iniciar pela interface gráfica, descomente a linha abaixo:
+    iniciar_interface()
+    # main()

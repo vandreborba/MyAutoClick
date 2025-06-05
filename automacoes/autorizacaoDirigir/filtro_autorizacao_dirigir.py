@@ -97,9 +97,20 @@ def processar_dados(dados, siapes):
     dados.to_excel(caminho_desktop, index=False)
     # Copia o conteúdo do DataFrame para a área de transferência, facilitando a colagem no Excel
     dados.to_clipboard(index=False, excel=True)
-    print('Conteúdo do relatório copiado para a área de transferência (formato Excel).')
-    print('Os seguintes servidores estão com a carteira vencida:\n\n')
-    print(dados[dados['Dias restantes'] == 'VENCIDO'].to_string(index=False))
+
+    # Exibe o resultado final em uma caixa de diálogo estilizada
+    from automacoes.caixas_dialogo import exibir_caixa_dialogo
+    vencidos = dados[dados['Dias restantes'] == 'VENCIDO']
+    mensagem = (
+        'Conteúdo do relatório copiado para a área de transferência (formato Excel).\n\n'
+        'Os seguintes servidores estão com a carteira vencida:\n\n'
+        f'{vencidos.to_string(index=False) if not vencidos.empty else "Nenhum servidor com carteira vencida."}'
+    )
+    exibir_caixa_dialogo(
+        titulo="Relatório de CNH - Vencidos",
+        mensagem=mensagem,
+        tipo="info"
+    )
 
 def filtrar(lista_siapes):
     """

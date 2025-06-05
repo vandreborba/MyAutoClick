@@ -42,27 +42,33 @@ def sequencia_portal(mes, ano):
     
 def solicitar_lista_setores_domicilios():
     """
-    Solicita ao usuário uma lista de setores e domicílios (separados por espaço, tab ou múltiplos espaços),
-    uma linha por registro. Finaliza com linha vazia.
+    Solicita ao usuário uma lista de setores e domicílios usando interface gráfica centralizada.
     Retorna uma lista de dicionários com as chaves: numero_setor, numero_domicilio.
-    Exemplo de entrada válida:
-        123456789012345 1
-        123456789012346 2
     """
-    print("Cole a lista de setores e domicílios (numeroSetor numeroDomicilio), com espaço ou tabulação, uma linha por registro. Finalize com uma linha vazia:")    
+    from automacoes.caixas_dialogo import solicitar_texto_multilinha, exibir_caixa_dialogo
+    mensagem = (
+        "Cole a lista de setores e domicílios (numeroSetor numeroDomicilio),\n"
+        "separados por espaço ou tabulação, uma linha por registro:"
+    )
+    texto = solicitar_texto_multilinha(
+        titulo="Setores e Domicílios",
+        mensagem=mensagem,
+        texto_exemplo="123456789012345 1\n123456789012346 2"
+    )
     lista_entradas = []
-    while True:
-        linha = input()
-        if not linha.strip():
-            break
-        try:
-            numero_setor, numero_domicilio = linha.strip().split()
+    if texto:
+        linhas = texto.splitlines()
+        for linha in linhas:
+            if not linha.strip():
+                continue
+            partes = linha.strip().replace("\t", " ").split()
+            if len(partes) != 2:
+                exibir_caixa_dialogo("Erro de Formato", f"Linha inválida: {linha}\nUse o formato: numeroSetor numeroDomicilio", tipo="erro")
+                return solicitar_lista_setores_domicilios()
             lista_entradas.append({
-                'numero_setor': numero_setor.strip(),
-                'numero_domicilio': numero_domicilio.strip()
+                'numero_setor': partes[0].strip(),
+                'numero_domicilio': partes[1].strip()
             })
-        except Exception:
-            print(f"[ERRO] Linha inválida: {linha}. Use o formato numeroSetor numeroDomicilio.")
     return lista_entradas
 
 def executar():

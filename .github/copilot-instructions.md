@@ -26,6 +26,9 @@
 ## Imports
 - **Localização:** Sempre coloque todos os imports no início do arquivo, exceto quando houver uma justificativa técnica clara para importar dentro de funções (ex: evitar dependências circulares, otimizar carregamento condicional, etc.).
 
+## Diálogos e Interação com o Usuário
+- **Centralização de Diálogos:** Todas as solicitações, avisos e caixas de diálogo para o usuário devem ser feitas exclusivamente pelo arquivo `automacoes/caixas_dialogo.py`, garantindo padronização visual e centralização da comunicação com o usuário.
+
 # Para compilar o projeto e gerar um único arquivo .exe na pasta 'dist' e copiar para a área de trabalho, execute:
 #
 # Opção recomendada (PowerShell):
@@ -36,4 +39,4 @@
 # O executável será gerado na pasta 'dist' do projeto e uma cópia será feita para a área de trabalho.
 # Utilize este comando sempre que solicitar a compilação do projeto com ícone personalizado.
 #
-# Ao compilar o projeto (gerar o .exe), atualize automaticamente o valor de VERSAO_SISTEMA no arquivo main.py, incrementando o número após o ponto (exemplo: de "0.8" para "0.9"). Isso deve ser feito antes da etapa de compilação para garantir que o executável reflita a versão mais recente.
+# Ao compilar o projeto (gerar o .exe), atualize automaticamente o valor de VERSAO_SISTEMA no arquivo config_interface.py, incrementando o número após o ponto. Isso deve ser feito antes da etapa de compilação para garantir que o executável reflita a versão mais recente.

@@ -187,25 +187,39 @@ def executar():
     if not mes or not ano:
         return
 
-    # Solicita a lista de setores e domicílios
-    print("Cole a lista de setores e domicílios (numeroSetor\tnumeroDomicilio), uma linha por registro. Finalize com uma linha vazia:")
+    # Solicita a lista de setores e domicílios usando interface gráfica centralizada
+    from automacoes.caixas_dialogo import solicitar_texto_multilinha, exibir_caixa_dialogo
+    mensagem = (
+        "Cole a lista de setores e domicílios (numeroSetor numeroDomicilio),\n"
+        "separados por espaço ou tabulação, uma linha por registro:"
+    )
+    texto = solicitar_texto_multilinha(
+        titulo="Setores e Domicílios",
+        mensagem=mensagem,
+        texto_exemplo="123456789012345 1\n123456789012346 2"
+    )
     lista_entradas = []
-    while True:
-        linha = input()
-        if not linha.strip():
-            break
-        try:
-            numero_setor, numero_domicilio = linha.strip().split("\t")
+    if texto:
+        linhas = texto.splitlines()
+        for linha in linhas:
+            if not linha.strip():
+                continue
+            partes = linha.strip().replace("\t", " ").split()
+            if len(partes) != 2:
+                exibir_caixa_dialogo("Erro de Formato", f"Linha inválida: {linha}\nUse o formato: numeroSetor numeroDomicilio", tipo="erro")
+                return executar()
             lista_entradas.append({
-                'numero_setor': numero_setor.strip(),
-                'numero_domicilio': numero_domicilio.strip()
+                'numero_setor': partes[0].strip(),
+                'numero_domicilio': partes[1].strip()
             })
-        except Exception:
-            print(f"[ERRO] Linha inválida: {linha}. Use o formato numeroSetor\tnumeroDomicilio.")
 
     driver = util_selenium.inicializar_webdriver_com_perfil()
     sequencia_portal(lista_entradas, mes, ano)    
-    
+
+    exibir_caixa_dialogo("Automação Concluída",
+        "Os questionários foram baixados com sucesso.",
+        tipo="sucesso"
+    )
     # Terminou:
     driver.quit()
     print("Automação concluída.")

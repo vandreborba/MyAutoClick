@@ -1,5 +1,5 @@
 import time
-from automacoes import util_selenium, utils
+from automacoes import caixas_dialogo, util_selenium, utils
 from selenium.webdriver.common.by import By
 from automacoes.config_municipio_estado import config_municipio_estado
 from automacoes.log_util import obter_logger
@@ -11,19 +11,12 @@ driver = None  # Variável global para armazenar o WebDriver
 
 def solicitar_mes_ano():
     """
-    Solicita ao usuário o mês e o ano no formato M-AAAA e retorna os valores.
+    Solicita ao usuário o mês e o ano usando interface gráfica intuitiva.
     Retorna:
         tuple: (mes, ano) como strings, ou (None, None) se a entrada for inválida.
     """
-    entrada = input("Digite o mês e o ano (ex: 5-2025): ")
-    try:
-        mes, ano = entrada.strip().split("-")
-        mes = mes.strip().lstrip("0")
-        ano = ano.strip()
-        return mes, ano
-    except Exception:
-        print("[ERRO] Entrada inválida! Use o formato M-AAAA, por exemplo: 5-2025")
-        return None, None
+    from automacoes.pnadC.solicitar_mes_ano_interface import solicitar_mes_ano_interface
+    return solicitar_mes_ano_interface()
 def clicar_todos_botoes_bloqueado(driver):
     """
     Clica em todos os botões de 'Bloqueado' na página para liberar a codificação dos domicílios.
@@ -115,8 +108,11 @@ def sequencia_portal(mes, ano):
         # Depois que percorreu tudo do setor, tem que clicar em Expandir Filtro, para aparecer o menu novamente:        
                 
     # Exibe mensagem final com o total de entrevistas liberadas, usando cor verde no terminal
-    print(f"\033[92mLiberado {total_liberado} entrevistas para codificação\033[0m")
-    # Comentário: \033[92m é o código ANSI para verde, \033[0m reseta a cor.
+    caixas_dialogo.exibir_caixa_dialogo(
+        "Liberação de Codificação Concluída",
+        f"{total_liberado} entrevistas foram liberadas para codificação.",
+        tipo="sucesso"
+    )        
 
 def executar():
     global driver  
