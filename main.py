@@ -41,58 +41,7 @@ def limpar_credenciais_criptografadas():
     else:
         exibir_caixa_dialogo("Limpeza de Credenciais", "Nenhum arquivo de credencial ou chave encontrado para remover.", tipo="info")
 
-def mostrar_menu():
-    """
-    Exibe o menu principal do My IBGE Auto Clicker com formatação visual aprimorada.
-    """
-    print("\n" + "="*50)    
-    print(f"      \033[1;36mBem-vindo ao My IBGE Auto Clicker v{VERSAO_SISTEMA}\033[0m")    
-    print("="*50)
-    print(f"\033[0;90mInstruções: \n{INSTRUCOES_SISTEMA}\033[0m")
-
-    print("\n\033[1;33mMENU PRINCIPAL\033[0m\n")
-    print("\n\033[1;34m--- Econômicas ---\033[0m")
-    print("\033[1;32m10.\033[0m  Download Relatórios Mensais")
-    print("\n\033[1;34m--- PnadC ---\033[0m")
-    print("\033[1;32m20.\033[0m  Liberar Codificação (Todos)")    
-    print("\033[1;32m21.\033[0m  Cancelar Liberação Codificação")
-    print("\033[1;32m22.\033[0m  Baixar Questionários")
-    print("\033[1;32m23.\033[0m  Associar Entrevistas")
-    print("\n\033[1;34m--- Administração ---\033[0m")
-    print("\033[1;32m30.\033[0m  Relatório de Autorização para Dirigir")    
-    print("\n\033[1;34m--- Outros ---\033[0m")
-    print("\033[1;32m98.\033[0m  Configurar Município e Estado")
-    print("\033[1;32m99.\033[0m  Limpar credenciais salvas")
-    print("\033[1;31m0.\033[0m  Sair")
-    print("="*50)
-
-def executar_opcao(opcao):
-    # Função movida para automacoes/config_interface.py
-    from automacoes.config_interface import executar_opcao as executar_opcao_interface
-    return executar_opcao_interface(opcao)
-
-def main():    
-    executando = True
-    # Aviso sobre o Chrome Portable
-    from automacoes.util_selenium import CAMINHO_CHROME_PORTABLE
-    if not os.path.exists(CAMINHO_CHROME_PORTABLE):
-        print("\n\033[1;31mATENÇÃO:\033[0m Para automação funcionar corretamente, baixe a versão 135 do Google Chrome Portable e extraia na área de trabalho, na pasta 'GoogleChromePortable'.\nO executável deve estar em: 'GoogleChromePortable/App/Chrome-bin/chrome.exe'\nLink recomendado: https://portableapps.com/apps/internet/google_chrome_portable (verifique a versão 124)")
-    # Verifica se foi passado argumento na linha de comando
-    if len(sys.argv) > 1:
-        argumento = sys.argv[1]
-        print(f"[INFO] Argumento recebido: {argumento}")
-        executar_opcao(argumento)
-        return  # Sai após executar a opção por argumento
-
-    while executando:       
-        mostrar_menu()
-        try:
-            opcao = input("\nEscolha uma opção: ")
-            executando = executar_opcao(opcao)
-        except ValueError:
-            print("\nErro: Digite um número válido!")
 
 if __name__ == "__main__":
     # Se desejar iniciar pela interface gráfica, descomente a linha abaixo:
-    iniciar_interface()
-    # main()
+    iniciar_interface()    

@@ -117,7 +117,7 @@ def solicitar_credenciais_interface(nome_sistema=""):
             exibir_caixa_dialogo("Atenção", "Preencha login e senha.", tipo="erro")
 
     btn_ok = ttk.Button(root, text="OK", style="Dialog.TButton", command=confirmar)
-    btn_ok.pack(pady=18)
+    btn_ok.pack(pady=36)
     entry_login.focus_set()
     root.bind('<Return>', lambda e: confirmar())
     root.wait_window()
@@ -135,6 +135,8 @@ def solicitar_texto_multilinha(titulo, mensagem, texto_exemplo=None):
     """
     import tkinter as tk
     from tkinter import ttk
+    
+    # Dicionário para armazenar o resultado
     resultado = {"texto": None}
 
     def confirmar():
@@ -145,25 +147,42 @@ def solicitar_texto_multilinha(titulo, mensagem, texto_exemplo=None):
         resultado["texto"] = texto
         janela.destroy()
 
+    # Criação da janela principal
     janela = tk.Toplevel()
     janela.title(titulo)
-    janela.geometry("520x360")
+    janela.geometry("520x420")
     janela.configure(bg="#f0f4f7")
     janela.grab_set()
     janela.transient(janela.master)
     janela.lift()
     janela.attributes('-topmost', True)
 
-    label = tk.Label(janela, text=mensagem, font=("Segoe UI", 10), bg="#f0f4f7", fg="#0077b6", justify="left")
+    # Label de instrução com quebra automática de linha
+    label = tk.Label(janela, text=mensagem, font=("Segoe UI", 10), bg="#f0f4f7", fg="#0077b6", justify="left", wraplength=440)
     label.pack(pady=(18, 6), padx=12, anchor="w")
 
-    text_input = tk.Text(janela, height=12, font=("Consolas", 11), wrap="none", bg="#fff", fg="#222", borderwidth=2, relief="groove")
-    text_input.pack(padx=16, pady=6, fill="both", expand=True)
+    # Frame para o campo de texto e scrollbar
+    frame_texto = tk.Frame(janela, bg="#f0f4f7")
+    frame_texto.pack(padx=16, pady=6, fill="both", expand=True)
+
+    # Scrollbar vertical
+    scrollbar = tk.Scrollbar(frame_texto)
+    scrollbar.pack(side="right", fill="y")
+
+    # Campo de texto multilinha com quebra automática de linha por palavra
+    text_input = tk.Text(frame_texto, height=12, font=("Consolas", 11), wrap="word", bg="#fff", fg="#222", borderwidth=2, relief="groove", yscrollcommand=scrollbar.set)
+    text_input.pack(side="left", fill="both", expand=True)
+    scrollbar.config(command=text_input.yview)
+
     if texto_exemplo:
         text_input.insert("1.0", texto_exemplo)
 
-    btn_ok = ttk.Button(janela, text="OK", command=confirmar)
-    btn_ok.pack(pady=14)
+    # Frame para o botão OK, fixando-o na parte inferior
+    frame_botoes = tk.Frame(janela, bg="#f0f4f7")
+    frame_botoes.pack(fill="x", side="bottom", pady=(0, 14))
+
+    btn_ok = ttk.Button(frame_botoes, text="OK", command=confirmar)
+    btn_ok.pack(pady=0)
     text_input.focus_set()
     janela.bind('<Return>', lambda e: confirmar())
     janela.wait_window()

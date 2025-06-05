@@ -5,8 +5,28 @@ from selenium.webdriver.common.by import By
 from automacoes.log_util import obter_logger
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from automacoes import caixas_dialogo
 
 logger = obter_logger(__name__)
+
+def abrir_portalWeb(driver):
+    url_portal_web = "https://portalweb.ibge.gov.br/"
+    driver.get(url_portal_web)
+    # tela login usuário? ou Entrou?
+    texto = util_selenium.aguardar_textos_na_pagina(driver, lista_textos=["Pesquisas Econômicas", "Entrar"], tempo_espera=30)
+    if texto == "Pesquisas Econômicas":
+        print("[INFO] Acesso ao Portal Web do IBGE concluído.")
+        return
+    elif texto == "Entrar":
+        # exibir caixa de diálogo para solicitar usuário logar manualmente:
+        caixas_dialogo.exibir_caixa_dialogo(
+            titulo="Acesso ao Portal Web",
+            mensagem="Por favor, faça login manualmente no Portal Web do IBGE.",
+            tipo="info")
+        util_selenium.aguardar_elemento_por_texto(driver, "Pesquisas Econômicas", tempo_espera=360)
+        print("[INFO] Acesso ao Portal Web do IBGE concluído.")
+        return
+
 
 def aguardar_distribuicao_nao_zero(driver, tempo_espera=60):
     """
@@ -48,8 +68,8 @@ def abrir_pnad_c(driver):
     Parâmetros:
         driver: Instância do WebDriver já inicializada.
     """
-    url_portal_web = "https://portalweb.ibge.gov.br/"
-    driver.get(url_portal_web)
+    # Utiliza função centralizada para garantir acesso ao portal
+    abrir_portalWeb(driver)
     # Clica no menu principal, aguardando o login se necessário
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Pesquisas Domiciliares e Sociais", tempo_espera=180)
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "PNAD Contínua")
@@ -58,18 +78,14 @@ def abrir_pnad_c(driver):
     # Aguarda até que o elemento com id 'NaoDistribuido' ou 'Distribuido' seja diferente de zero
     aguardar_distribuicao_nao_zero(driver, tempo_espera=60)
     print("[INFO] Site Carregado")
-    # tem que logar ou já está logado?
+    # Verifica se é necessário realizar login adicional
     if util_selenium.verificar_texto_presente(driver, "Login"):
         util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Login")
         (login, senha) = utils.solicitar_credenciais("Portalweb")
         util_selenium.aguardar_elemento_por_texto(driver, "Login Integrado", tempo_espera=30)
-        # Preenche o campo de login
         util_selenium.preencher_campo(driver, (By.ID, "UserName"), login)
-        # Preenche o campo de senha
         util_selenium.preencher_campo(driver, (By.ID, "Password"), senha)
-        # Clica no botão de login
         util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "login"))
-        # Aguarda até aparecer "Login ou senha inválidos." ou "Visão Geral"
         resultado_login = util_selenium.aguardar_textos_na_pagina(
             driver,
             ["Login ou senha inválidos.", "Visão Geral"],
@@ -79,25 +95,22 @@ def abrir_pnad_c(driver):
             print("[ERRO] Login ou senha inválidos. Limpe suas credenciais e tente novamente.")
             driver.quit()
             return
-        # Se for "Visão Geral", segue normalmente
-        # Se for None, pode ser timeout, tratar conforme necessário
         elif resultado_login is None:
             print("[ERRO] Não foi possível determinar o resultado do login (timeout).")
             driver.quit()
             return
-        # Se "Visão Geral", segue o fluxo normalmente
         time.sleep(2)
-    # Já logou.    
     print("[INFO] Acesso à PNAD Contínua concluído.")
+
 
 def acessarSda(driver):
     """
     Acessa o portal web do IBGE, navega até o SDA e realiza o login, se necessário.
     Preenche os campos de usuário e senha e clica nos botões de login.
     """
-    url_portal_web = "https://portalweb.ibge.gov.br/"
-    driver.get(url_portal_web)
-    # Clica no menu principal, aguardando o login se necessário
+    # Utiliza função centralizada para garantir acesso ao portal
+    abrir_portalWeb(driver)
+    # Clica no menu principal, aguardando o login se necessário    
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Sistemas Administrativos", tempo_espera=180)
     util_selenium.clicar_elemento_por_texto_com_fallback(driver, "SDA")
     # Alterna para a nova aba aberta, caso o clique abra em nova aba

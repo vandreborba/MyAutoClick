@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 
 from automacoes.pnadC import liberarCodificacao
 
+teste = False  # Define se está em modo de teste (True) ou produção (False)
 
 def executar():
     global driver  
@@ -53,10 +54,13 @@ def iniciar_sequencia_portal(lista_entradas_processada):
         # Clica no botão para associar unidade
         util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btn_associar_unidade"))
         time.sleep(1)
-        # Para produção, descomente a linha abaixo e comente a de cancelar
-        util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btn_salvar_modal_unidade"))
-        # Para teste, cancela a associação
-        # util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btn_cancelar_modal_unidade"))
+        # Verifica se está em modo de teste ou produção para decidir qual botão clicar
+        if teste:
+            # Em modo de teste, cancela a associação
+            util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btn_cancelar_modal_unidade"))
+        else:
+            # Em produção, salva a associação
+            util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btn_salvar_modal_unidade"))
         # Comentário: repete o processo para cada SIAPE e suas unidades
         time.sleep(1)
     # Exemplo testado:
@@ -76,17 +80,20 @@ def iniciar_sequencia_portal(lista_entradas_processada):
 def solicitar_lista_setores_domicilios_siape():
     """
     Solicita ao usuário uma lista de setores, domicílios e SIAPE do entrevistador usando interface gráfica centralizada.
+    Aceita dois formatos de entrada por linha:
+    1. Formato antigo: <setor> <domicilio> <siape>
+    2. Novo formato: <setor> <domicilio1> <domicilio2> ... <domicilioN> <siape>
     Retorna uma lista de dicionários com as chaves: numero_setor, numero_domicilio, siape_entrevistador.
     """
     from automacoes.caixas_dialogo import solicitar_texto_multilinha, exibir_caixa_dialogo
     mensagem = (
-        "Cole a lista de setores, domicílios e SIAPE (numeroSetor numeroDomicilio siapeEntrevistador),\n"
-        "separados por espaço ou tabulação, uma linha por registro:\n\nExemplo:\n410730605000009 1 1234567\n410730605000009 2 1234567\n412625605000054 2 7654321"
+        "Cole a lista de setores, domicílios e SIAPE (numeroSetor [domicilios...] siapeEntrevistador),\n"
+        "separados por espaço ou tabulação, uma linha por registro.\n\nExemplo:\n410730605000009 1 1234567\n410730605000009 1 2 3 1234567\n412625605000054 2 7654321"
     )
     texto = solicitar_texto_multilinha(
         titulo="Setores, Domicílios e SIAPE",
         mensagem=mensagem,
-        texto_exemplo="410730605000009 1 1234567\n410730605000009 2 1234567\n412625605000054 2 7654321"
+        texto_exemplo="410730605000009 1 1234567\n410730605000009 1 2 3 1234567\n412625605000054 2 7654321"
     )
     lista_entradas = []
     if texto:
@@ -95,15 +102,20 @@ def solicitar_lista_setores_domicilios_siape():
             if not linha.strip():
                 continue
             partes = linha.strip().replace("\t", " ").split()
-            if len(partes) != 3:
-                exibir_caixa_dialogo("Erro de Formato", f"Linha inválida: {linha}\nUse o formato: numeroSetor numeroDomicilio siapeEntrevistador", tipo="erro")
+            # Precisa ter pelo menos 3 partes: setor, pelo menos 1 domicilio, siape
+            if len(partes) < 3:
+                exibir_caixa_dialogo("Erro de Formato", f"Linha inválida: {linha}\nUse o formato: numeroSetor [domicilios...] siapeEntrevistador", tipo="erro")
                 return solicitar_lista_setores_domicilios_siape()
-            numero_setor, numero_domicilio, siape_entrevistador = partes
-            lista_entradas.append({
-                'numero_setor': numero_setor.strip(),
-                'numero_domicilio': numero_domicilio.strip(),
-                'siape_entrevistador': siape_entrevistador.strip()
-            })
+            numero_setor = partes[0]
+            siape_entrevistador = partes[-1]
+            lista_domicilios = partes[1:-1]
+            # Para cada domicílio informado, cria uma entrada
+            for numero_domicilio in lista_domicilios:
+                lista_entradas.append({
+                    'numero_setor': numero_setor.strip(),
+                    'numero_domicilio': numero_domicilio.strip(),
+                    'siape_entrevistador': siape_entrevistador.strip()
+                })
     return lista_entradas
 
 def processar_lista_siape_setores(lista_entradas):
