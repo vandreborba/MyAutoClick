@@ -178,26 +178,29 @@ def renomear_ultimo_pdf_baixado(info):
     except Exception as erro:
         print(f"[ERRO] Não foi possível renomear o arquivo PDF: {erro}")
 
-def executar():
+def executar(mes=None, ano=None, texto_input=None):
     global driver  
     print("Iniciando automação para baixar questionários...")
 
     # Solicita o mês e o ano antes de iniciar o WebDriver
-    mes, ano = solicitar_mes_ano()
+    if not mes or not ano:
+        mes, ano = solicitar_mes_ano()
     if not mes or not ano:
         return
 
+    texto = texto_input
     # Solicita a lista de setores e domicílios usando interface gráfica centralizada
-    from automacoes.caixas_dialogo import solicitar_texto_multilinha, exibir_caixa_dialogo
-    mensagem = (
-        "Cole a lista de setores e domicílios (numeroSetor numeroDomicilio),\n"
-        "separados por espaço ou tabulação, uma linha por registro:"
-    )
-    texto = solicitar_texto_multilinha(
-        titulo="Setores e Domicílios",
-        mensagem=mensagem,
-        texto_exemplo="123456789012345 1\n123456789012346 2"
-    )
+    if not texto:
+        from automacoes.caixas_dialogo import solicitar_texto_multilinha, exibir_caixa_dialogo
+        mensagem = (
+            "Cole a lista de setores e domicílios (numeroSetor numeroDomicilio),\n"
+            "separados por espaço ou tabulação, uma linha por registro:"
+        )
+        texto = solicitar_texto_multilinha(
+            titulo="Setores e Domicílios",
+            mensagem=mensagem,
+            texto_exemplo="123456789012345 1\n123456789012346 2"
+        )
     lista_entradas = []
     if texto:
         linhas = texto.splitlines()

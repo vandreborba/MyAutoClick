@@ -40,21 +40,22 @@ def sequencia_portal(mes, ano):
         time.sleep(1)                        
 
     
-def solicitar_lista_setores_domicilios():
+def solicitar_lista_setores_domicilios(texto=None):
     """
     Solicita ao usuário uma lista de setores e domicílios usando interface gráfica centralizada.
     Retorna uma lista de dicionários com as chaves: numero_setor, numero_domicilio.
     """
-    from automacoes.caixas_dialogo import solicitar_texto_multilinha, exibir_caixa_dialogo
-    mensagem = (
-        "Cole a lista de setores e domicílios (numeroSetor numeroDomicilio),\n"
-        "separados por espaço ou tabulação, uma linha por registro:"
-    )
-    texto = solicitar_texto_multilinha(
-        titulo="Setores e Domicílios",
-        mensagem=mensagem,
-        texto_exemplo="123456789012345 1\n123456789012346 2"
-    )
+    if not texto:
+        from automacoes.caixas_dialogo import solicitar_texto_multilinha, exibir_caixa_dialogo
+        mensagem = (
+            "Cole a lista de setores e domicílios (numeroSetor numeroDomicilio),\n"
+            "separados por espaço ou tabulação, uma linha por registro:"
+        )
+        texto = solicitar_texto_multilinha(
+            titulo="Setores e Domicílios",
+            mensagem=mensagem,
+            texto_exemplo="123456789012345 1\n123456789012346 2"
+        )
     lista_entradas = []
     if texto:
         linhas = texto.splitlines()
@@ -71,21 +72,20 @@ def solicitar_lista_setores_domicilios():
             })
     return lista_entradas
 
-def executar():
+def executar(mes, ano, texto_input):
     global driver, lista_entradas  
     print("Iniciando automação para Cancelar Liberção Codificação...")
 
     # Solicita o mês e o ano antes de iniciar o WebDriver
-    mes, ano = liberarCodificacao.solicitar_mes_ano()    
+    if not mes or not ano:
+        mes, ano = liberarCodificacao.solicitar_mes_ano()    
     if not mes or not ano:
         return
     # Solicita a lista de setores e domicílios
-    lista_entradas = solicitar_lista_setores_domicilios()
-    
+    lista_entradas = solicitar_lista_setores_domicilios(texto_input)
+
     driver = util_selenium.inicializar_webdriver_com_perfil()
     sequencia_portal(mes, ano)
-
-    
 
     # Terminou:
     driver.quit()

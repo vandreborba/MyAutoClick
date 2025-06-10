@@ -1,25 +1,26 @@
-# Centraliza constantes e funções compartilhadas entre main.py e interface_grafica.py
+﻿# Centraliza constantes e funÃ§Ãµes compartilhadas entre main.py e interface_grafica.py
 from automacoes import relatorioMensais
 from automacoes.autorizacaoDirigir import autorizacao_dirigir
 from automacoes.pnadC import baixarQuestionario, cancelarCodificacao, liberarCodificacao
-from automacoes.pnadC import associarEntrevistas
+from automacoes.pnadC import associarEntrevistas, retornarDMC
 
-# Número da versão do sistema
-VERSAO_SISTEMA = "0.10"
+# NÃºmero da versÃ£o do sistema
+VERSAO_SISTEMA = "0.15"
 
-# Instruções de uso do sistema
+# InstruÃ§Ãµes de uso do sistema
+# Constante que armazena as instruções de uso do sistema para exibição ao usuário.
 INSTRUCOES_SISTEMA = '''
 - Este programa automatiza algumas atividades usando o navegador de forma autônoma,
-  porém algumas vezes é necessário fazer login manualmente nos sistemas.
-- Você pode usar computador enquanto o robô executa as tarefas, mas não minimize o navegador.
+    porém algumas vezes é necessário fazer login manualmente nos sistemas.
+- Você pode usar o computador enquanto o robô executa as tarefas, mas não minimize o navegador.
 - Usar somente em rede da agência (Computadores da agência).
 '''
 
 def executar_opcao(opcao):
     """
-    Executa a ação correspondente à opção escolhida, seja por argumento ou menu.
-    Parâmetros:
-        opcao (str ou int): Opção escolhida pelo usuário.
+    Executa a aÃ§Ã£o correspondente Ã  opÃ§Ã£o escolhida, seja por argumento ou menu.
+    ParÃ¢metros:
+        opcao (str ou int): OpÃ§Ã£o escolhida pelo usuÃ¡rio.
     """
     from automacoes.config_municipio_estado import config_municipio_estado
     if str(opcao) == "10":
@@ -32,6 +33,8 @@ def executar_opcao(opcao):
         baixarQuestionario.executar()
     elif str(opcao) == "23":
         associarEntrevistas.executar()
+    elif str(opcao) == "24":
+        retornarDMC.executar()
     elif str(opcao) == "30":
         autorizacao_dirigir.executar()    
     elif str(opcao) == "98":
@@ -44,7 +47,7 @@ def executar_opcao(opcao):
         if novo_municipio:
             config_municipio_estado.municipio = novo_municipio
         config_municipio_estado.salvar()
-        print("[SUCESSO] Configuração salva!")
+        print("[SUCESSO] ConfiguraÃ§Ã£o salva!")
     elif str(opcao) == "99":
         from main import limpar_credenciais_criptografadas
         limpar_credenciais_criptografadas()
@@ -52,5 +55,5 @@ def executar_opcao(opcao):
         print("\nSaindo do programa...")
         return False
     else:
-        print("\nOpção inválida! Digite 1, 2, 3, 8, 9 ou 0.")
+        print("\nOpÃ§Ã£o invÃ¡lida! Digite 1, 2, 3, 8, 9 ou 0.")
     return True

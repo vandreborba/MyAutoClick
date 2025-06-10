@@ -13,10 +13,15 @@ from automacoes.config_interface import VERSAO_SISTEMA, INSTRUCOES_SISTEMA, exec
 
 '''
 #############
-
+Todo:
 - Criar o cadastro do rev. sev.
-- Criar um "retornar entrevistas". Tem que cancelar a codificação, baixar o questionário e associar as entrevistas.
 - Criar um "conferir se a empresa está nas econômicas anuais", o script receberia uma lista de CNPJs e verificaria se estão na base de econômicas anuais, retornando os que estão.
+- Cadastro de divórcios.
+
+- Melhorar fluxo do retornarDMC (não precisa ficar abrindo pnadC toda hora... só a primeira vez).
+
+Testar:
+- "retornar entrevistas".
 
 #############
 '''
@@ -28,10 +33,10 @@ def limpar_credenciais_criptografadas():
     Remove os arquivos de credenciais e chave de criptografia salvos localmente e exibe o resultado em caixa de diálogo.
     """
     import os
-    from automacoes.utils import CAMINHO_ARQUIVO_CREDENCIAIS, CAMINHO_ARQUIVO_CHAVE
+    from automacoes.utils import CAMINHO_ARQUIVO_CHAVE
     from automacoes.caixas_dialogo import exibir_caixa_dialogo
     arquivos_removidos = []
-    for caminho in [CAMINHO_ARQUIVO_CREDENCIAIS, CAMINHO_ARQUIVO_CHAVE]:
+    for caminho in [CAMINHO_ARQUIVO_CHAVE]:
         if os.path.exists(caminho):
             os.remove(caminho)
             arquivos_removidos.append(caminho)

@@ -9,14 +9,15 @@ from tkinter import ttk
 def exibir_caixa_dialogo(titulo, mensagem, tipo="info"):
     """
     Exibe uma caixa de diálogo estilizada para avisos, erros ou confirmações.
+    O tamanho da janela é ajustado dinamicamente conforme o tamanho da mensagem.
     Parâmetros:
         titulo (str): Título da janela de diálogo.
         mensagem (str): Mensagem a ser exibida.
         tipo (str): 'info', 'erro' ou 'sucesso'.
     """
+    import textwrap
     dialogo = tk.Toplevel()
-    dialogo.title(titulo)    
-    dialogo.geometry("500x250")
+    dialogo.title(titulo)
     dialogo.configure(bg="#f0f4f7")
     dialogo.resizable(False, False)
     dialogo.grab_set()  # Modal
@@ -34,7 +35,14 @@ def exibir_caixa_dialogo(titulo, mensagem, tipo="info"):
     label_icone.pack(pady=(18, 0))
 
     # Mensagem
-    label_msg = tk.Label(dialogo, text=mensagem, font=("Segoe UI", 11), bg="#f0f4f7", fg="#222", wraplength=340, justify="center")
+    # Calcula largura e altura ideais
+    linhas = mensagem.split('\n')
+    max_linha = max((len(l) for l in linhas), default=40)
+    largura = min(max(340, max_linha * 8), 900)  # 8px por caractere, limite máximo
+    n_linhas = len(linhas) + sum(len(l)//80 for l in linhas)  # considera quebras
+    altura = min(max(80 + n_linhas * 22, 120), 600)  # Altura mínima/máxima
+
+    label_msg = tk.Label(dialogo, text=mensagem, font=("Segoe UI", 11), bg="#f0f4f7", fg="#222", wraplength=largura, justify="center")
     label_msg.pack(pady=(10, 0), padx=18)
 
     # Botão OK estilizado
@@ -61,6 +69,13 @@ def exibir_caixa_dialogo(titulo, mensagem, tipo="info"):
     dialogo.transient(dialogo.master)
     dialogo.lift()  # Traz para frente
     dialogo.attributes('-topmost', True)  # Mantém no topo
+
+    # Define tamanho dinâmico
+    dialogo.update_idletasks()
+    largura_final = max(label_msg.winfo_reqwidth() + 60, 340)
+    altura_final = max(label_icone.winfo_reqheight() + label_msg.winfo_reqheight() + btn_ok.winfo_reqheight() + 90, altura)
+    dialogo.geometry(f"{largura_final}x{altura_final}")
+
     dialogo.wait_window()
 
 def solicitar_credenciais_interface(nome_sistema=""):

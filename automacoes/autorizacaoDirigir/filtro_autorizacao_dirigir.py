@@ -101,10 +101,15 @@ def processar_dados(dados, siapes):
     # Exibe o resultado final em uma caixa de diálogo estilizada
     from automacoes.caixas_dialogo import exibir_caixa_dialogo
     vencidos = dados[dados['Dias restantes'] == 'VENCIDO']
+    if not vencidos.empty:
+        nomes_vencidos = '\n'.join(vencidos['Funcionário'].tolist())
+    else:
+        nomes_vencidos = 'Nenhum servidor com carteira vencida.'
     mensagem = (
-        'Conteúdo do relatório copiado para a área de transferência (formato Excel).\n\n'
+        'Conteúdo do relatório copiado para a área de transferência (formato Excel).\n'
+        'Arquivo salvo na área de trabalho como "Vencimento Carteiras.xlsx".\n\n'
         'Os seguintes servidores estão com a carteira vencida:\n\n'
-        f'{vencidos.to_string(index=False) if not vencidos.empty else "Nenhum servidor com carteira vencida."}'
+        f'{nomes_vencidos}'
     )
     exibir_caixa_dialogo(
         titulo="Relatório de CNH - Vencidos",

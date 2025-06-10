@@ -6,11 +6,15 @@ from automacoes.pnadC import liberarCodificacao
 
 teste = False  # Define se está em modo de teste (True) ou produção (False)
 
-def executar():
+def executar(texto_input=None):
+    """
+    Executa a automação para associar entrevistas. O parâmetro texto_input é opcional;
+    se não for fornecido, será solicitado ao usuário.
+    """
     global driver  
     print("Iniciando automação para liberar codificação...")
             
-    lista_entradas = solicitar_lista_setores_domicilios_siape()
+    lista_entradas = solicitar_lista_setores_domicilios_siape(texto_input)
     lista_entradas_processada = processar_lista_siape_setores(lista_entradas)    
 
     utils.solicitar_credenciais("Portalweb")
@@ -77,7 +81,7 @@ def iniciar_sequencia_portal(lista_entradas_processada):
     '''
     
     
-def solicitar_lista_setores_domicilios_siape():
+def solicitar_lista_setores_domicilios_siape(texto=None):
     """
     Solicita ao usuário uma lista de setores, domicílios e SIAPE do entrevistador usando interface gráfica centralizada.
     Aceita dois formatos de entrada por linha:
@@ -85,16 +89,17 @@ def solicitar_lista_setores_domicilios_siape():
     2. Novo formato: <setor> <domicilio1> <domicilio2> ... <domicilioN> <siape>
     Retorna uma lista de dicionários com as chaves: numero_setor, numero_domicilio, siape_entrevistador.
     """
-    from automacoes.caixas_dialogo import solicitar_texto_multilinha, exibir_caixa_dialogo
-    mensagem = (
-        "Cole a lista de setores, domicílios e SIAPE (numeroSetor [domicilios...] siapeEntrevistador),\n"
-        "separados por espaço ou tabulação, uma linha por registro.\n\nExemplo:\n410730605000009 1 1234567\n410730605000009 1 2 3 1234567\n412625605000054 2 7654321"
-    )
-    texto = solicitar_texto_multilinha(
-        titulo="Setores, Domicílios e SIAPE",
-        mensagem=mensagem,
-        texto_exemplo="410730605000009 1 1234567\n410730605000009 1 2 3 1234567\n412625605000054 2 7654321"
-    )
+    if not texto:
+        from automacoes.caixas_dialogo import solicitar_texto_multilinha, exibir_caixa_dialogo
+        mensagem = (
+            "Cole a lista de setores, domicílios e SIAPE (numeroSetor [domicilios...] siapeEntrevistador),\n"
+            "separados por espaço ou tabulação, uma linha por registro.\n\nExemplo:\n410730605000009 1 1234567\n410730605000009 1 2 3 1234567\n412625605000054 2 7654321"
+        )
+        texto = solicitar_texto_multilinha(
+            titulo="Setores, Domicílios e SIAPE",
+            mensagem=mensagem,
+            texto_exemplo="410730605000009 1 1234567\n410730605000009 1 2 3 1234567\n412625605000054 2 7654321"
+        )
     lista_entradas = []
     if texto:
         linhas = texto.splitlines()

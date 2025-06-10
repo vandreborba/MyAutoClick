@@ -26,7 +26,13 @@ def exibir_interface_principal():
     try:
         from PIL import Image, ImageTk
         import os
-        caminho_icone = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.ico')
+        import sys
+        if hasattr(sys, '_MEIPASS'):
+            # Executando via PyInstaller
+            caminho_icone = os.path.join(sys._MEIPASS, 'icon.ico')
+        else:
+            # Executando via script normal
+            caminho_icone = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.ico')
         if os.path.exists(caminho_icone):
             imagem_icone = Image.open(caminho_icone)
             imagem_icone = imagem_icone.resize((48, 48), Image.LANCZOS)
@@ -64,7 +70,8 @@ def exibir_interface_principal():
             ("Liberar Codificação (Todos)", "20"),
             ("Cancelar Liberação Codificação", "21"),
             ("Baixar Questionários", "22"),
-            ("Associar Entrevistas", "23")
+            ("Associar Entrevistas", "23"),
+            ("Retornar ao DMC", "24")
         ],
         "Administração": [
             ("Autorização para Dirigir", "30")
@@ -88,8 +95,8 @@ def exibir_interface_principal():
             except Exception as e:
                 messagebox.showerror("Erro", f"Erro ao executar opção: {e}")
 
-    # Criação dos botões de menu em duas colunas
-    colunas = 2
+    # Criação dos botões de menu em três colunas
+    colunas = 3
     linha = 0
     for secao, lista_opcoes in opcoes.items():
         label_secao = tk.Label(
@@ -113,7 +120,7 @@ def exibir_interface_principal():
                 command=lambda c=codigo: ao_clicar_opcao(c)
             )
             btn.grid(row=row, column=col, sticky="w", pady=3, padx=12)
-        linha += (len(lista_opcoes) + 1) // colunas
+        linha += (len(lista_opcoes) + colunas - 1) // colunas
 
     # Estilo moderno para os botões
     style = ttk.Style()

@@ -92,7 +92,12 @@ def abrir_pnad_c(driver):
             tempo_espera=30
         )
         if resultado_login == "Login ou senha inválidos.":
-            print("[ERRO] Login ou senha inválidos. Limpe suas credenciais e tente novamente.")
+            # Exibe mensagem de erro e encerra o driver
+            caixas_dialogo.exibir_caixa_dialogo(
+                titulo="Erro de Login",
+                mensagem="Login ou senha inválidos. Limpe suas credenciais e tente novamente.",
+                tipo="erro"
+            )            
             driver.quit()
             return
         elif resultado_login is None:

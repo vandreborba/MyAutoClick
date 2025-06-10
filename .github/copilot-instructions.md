@@ -38,5 +38,3 @@
 #
 # O executável será gerado na pasta 'dist' do projeto e uma cópia será feita para a área de trabalho.
 # Utilize este comando sempre que solicitar a compilação do projeto com ícone personalizado.
-#
-# Ao compilar o projeto (gerar o .exe), atualize automaticamente o valor de VERSAO_SISTEMA no arquivo config_interface.py, incrementando o número após o ponto. Isso deve ser feito antes da etapa de compilação para garantir que o executável reflita a versão mais recente.
