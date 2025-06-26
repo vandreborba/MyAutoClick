@@ -22,13 +22,13 @@ if (Test-Path $configInterface) {
 }
 
 # Compila o projeto e copia o executável para a área de trabalho (PowerShell)
-$pyinstaller = "pyinstaller"
+$pythonExe = ".venv\Scripts\python.exe"
 $nomeExe = "My IBGE AutoClicker.exe"
 $icone = "icon.ico"
 $main = "main.py"
 
 # Compilar
-& $pyinstaller --onefile --name "My IBGE AutoClicker" --icon $icone $main
+& $pythonExe -m PyInstaller --onefile --name "My IBGE AutoClicker" --icon $icone $main
 
 # Caminhos
 $distPath = Join-Path $PSScriptRoot "dist"
