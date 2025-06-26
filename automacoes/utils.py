@@ -234,6 +234,7 @@ def carregar_credenciais_criptografadas(nome_sistema=""):
             return None, None
     except Exception as erro:
         print(f"[ERRO] Não foi possível descriptografar as credenciais: {erro}")
+        print("[AVISO] O arquivo de credenciais pode estar corrompido. Use a função 'Limpar Credenciais' se o erro persistir.")
         return None, None
 
 
