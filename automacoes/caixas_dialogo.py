@@ -147,16 +147,18 @@ def solicitar_texto_multilinha(titulo, mensagem, texto_exemplo=None):
     """
     Exibe uma caixa de diálogo para o usuário colar/editar um texto multilinha.
     Retorna o texto informado (ou None se cancelado).
+    O botão "OK" é fixado na parte inferior e sempre visível.
     """
     import tkinter as tk
     from tkinter import ttk
-    
+
     # Dicionário para armazenar o resultado
     resultado = {"texto": None}
 
     def confirmar():
         texto = text_input.get("1.0", tk.END).strip()
         if not texto:
+            # Exibe mensagem de erro se o campo estiver vazio
             exibir_caixa_dialogo("Atenção", "O campo não pode estar vazio.", tipo="erro")
             return
         resultado["texto"] = texto
@@ -165,14 +167,14 @@ def solicitar_texto_multilinha(titulo, mensagem, texto_exemplo=None):
     # Criação da janela principal
     janela = tk.Toplevel()
     janela.title(titulo)
-    janela.geometry("520x420")
+    janela.geometry("520x480")
     janela.configure(bg="#f0f4f7")
     janela.grab_set()
     janela.transient(janela.master)
     janela.lift()
     janela.attributes('-topmost', True)
 
-    # Label de instrução com quebra automática de linha
+    # Label de instrução
     label = tk.Label(janela, text=mensagem, font=("Segoe UI", 10), bg="#f0f4f7", fg="#0077b6", justify="left", wraplength=440)
     label.pack(pady=(18, 6), padx=12, anchor="w")
 
@@ -184,7 +186,7 @@ def solicitar_texto_multilinha(titulo, mensagem, texto_exemplo=None):
     scrollbar = tk.Scrollbar(frame_texto)
     scrollbar.pack(side="right", fill="y")
 
-    # Campo de texto multilinha com quebra automática de linha por palavra
+    # Campo de texto multilinha
     text_input = tk.Text(frame_texto, height=12, font=("Consolas", 11), wrap="word", bg="#fff", fg="#222", borderwidth=2, relief="groove", yscrollcommand=scrollbar.set)
     text_input.pack(side="left", fill="both", expand=True)
     scrollbar.config(command=text_input.yview)
@@ -193,15 +195,22 @@ def solicitar_texto_multilinha(titulo, mensagem, texto_exemplo=None):
         text_input.insert("1.0", texto_exemplo)
 
     # Frame para o botão OK, fixando-o na parte inferior
-    frame_botoes = tk.Frame(janela, bg="#f0f4f7")
+    frame_botoes = tk.Frame(janela, bg="#f0f4f7", height=50)
     frame_botoes.pack(fill="x", side="bottom", pady=(0, 14))
+    frame_botoes.pack_propagate(False)  # Impede que o frame encolha demais
 
     btn_ok = ttk.Button(frame_botoes, text="OK", command=confirmar)
-    btn_ok.pack(pady=0)
+    btn_ok.pack(pady=8)
     text_input.focus_set()
-    janela.bind('<Return>', lambda e: confirmar())
-    janela.wait_window()
 
+    # Garante que o botão OK pode ser acionado com Enter apenas se o foco não estiver no campo de texto
+    def ao_pressionar_enter(event):
+        widget_focado = janela.focus_get()
+        if widget_focado != text_input:
+            confirmar()
+    janela.bind('<Return>', ao_pressionar_enter)
+
+    janela.wait_window()
     return resultado["texto"]
 
 def solicitar_config_municipio_estado(estado_atual, municipio_atual):

@@ -218,11 +218,7 @@ def executar(mes=None, ano=None, texto_input=None):
 
     driver = util_selenium.inicializar_webdriver_com_perfil()
     sequencia_portal(lista_entradas, mes, ano)    
-
-    exibir_caixa_dialogo("Automação Concluída",
-        "Os questionários foram baixados com sucesso.",
-        tipo="sucesso"
-    )
+   
     # Terminou:
     driver.quit()
     print("Automação concluída.")

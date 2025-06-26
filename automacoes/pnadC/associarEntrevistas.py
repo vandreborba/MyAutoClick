@@ -16,6 +16,9 @@ def executar(texto_input=None):
             
     lista_entradas = solicitar_lista_setores_domicilios_siape(texto_input)
     lista_entradas_processada = processar_lista_siape_setores(lista_entradas)    
+    if not lista_entradas:
+        print("Nenhuma entrada válida fornecida. Encerrando a automação.")
+        return
 
     utils.solicitar_credenciais("Portalweb")
     driver = util_selenium.inicializar_webdriver_com_perfil()

@@ -5,7 +5,7 @@ from automacoes.pnadC import baixarQuestionario, cancelarCodificacao, liberarCod
 from automacoes.pnadC import associarEntrevistas, retornarDMC
 
 # NÃºmero da versÃ£o do sistema
-VERSAO_SISTEMA = "0.15"
+VERSAO_SISTEMA = "0.17"
 
 # InstruÃ§Ãµes de uso do sistema
 # Constante que armazena as instruções de uso do sistema para exibição ao usuário.
@@ -25,6 +25,9 @@ def executar_opcao(opcao):
     from automacoes.config_municipio_estado import config_municipio_estado
     if str(opcao) == "10":
         relatorioMensais.executar()
+    elif str(opcao) == "11":
+        from automacoes import conferirRais
+        conferirRais.executar()
     elif str(opcao) == "20":
         liberarCodificacao.executar()
     elif str(opcao) == "21":

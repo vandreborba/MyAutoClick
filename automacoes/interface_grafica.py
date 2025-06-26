@@ -64,7 +64,8 @@ def exibir_interface_principal():
     # Dicionário de opções do menu
     opcoes = {
         "Econômicas": [
-            ("Download Relatórios Mensais", "10")
+            ("Download Relatórios Mensais", "10"),
+            ("Conferir Rais", "11")
         ],
         "PnadC": [
             ("Liberar Codificação (Todos)", "20"),

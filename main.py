@@ -14,14 +14,12 @@ from automacoes.config_interface import VERSAO_SISTEMA, INSTRUCOES_SISTEMA, exec
 '''
 #############
 Todo:
+- Receber uma lista de cnpj's e conferir dados da rais (PO e Sal).
 - Criar o cadastro do rev. sev.
 - Criar um "conferir se a empresa está nas econômicas anuais", o script receberia uma lista de CNPJs e verificaria se estão na base de econômicas anuais, retornando os que estão.
 - Cadastro de divórcios.
 
 - Melhorar fluxo do retornarDMC (não precisa ficar abrindo pnadC toda hora... só a primeira vez).
-
-Testar:
-- "retornar entrevistas".
 
 #############
 '''
