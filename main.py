@@ -20,6 +20,7 @@ Todo:
 - Cadastro de divórcios.
 
 - Melhorar fluxo do retornarDMC (não precisa ficar abrindo pnadC toda hora... só a primeira vez).
+- Download dos questionários não está funcionando bem, quando tem mais de um setor. Ele não consegue apertar o filtro.
 
 #############
 '''

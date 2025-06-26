@@ -2,19 +2,20 @@ import time
 from automacoes import config_municipio_estado, util_selenium
 from automacoes.pnadC.liberarCodificacao import abrir_pnad_c, solicitar_mes_ano
 from automacoes.utils import copiar_ultimo_pdf_baixado
+from selenium.webdriver.common.by import By  # Import necessário para o seletor
 
 
 def sequencia_portal(lista_entradas, mes, ano):
     global driver
 
     # Será se este endereço muda com o tempo?
-    urlLiberarCodificacao = "https://portalweb.ibge.gov.br/f5-w-68747470733a2f2f773373696763706e6164632e696267652e676f762e6272$$/f5-h-$$/Questionario"    
+    urlQuestionario = "https://portalweb.ibge.gov.br/f5-w-68747470733a2f2f773373696763706e6164632e696267652e676f762e6272$$/f5-h-$$/Questionario"    
     
     # Acessa o portal web e navega até PNAD Contínua
     abrir_pnad_c(driver)
 
     # Vamos tentr acessar a URL diretamente agora:
-    driver.get(urlLiberarCodificacao)
+    driver.get(urlQuestionario)
     # aguardar carregar: (Aparece "TODOS" quando carrega)
      # tem que dar tempo da pessoa fazer o login.
     util_selenium.aguardar_elemento_por_texto(driver, "TODOS", tempo_espera=120)    
@@ -34,11 +35,11 @@ def sequencia_portal(lista_entradas, mes, ano):
         util_selenium.clicar_elemento_por_texto_com_fallback(driver, "Filtrar")
         time.sleep(1)              
         listar_e_baixar_entrevistas_disponiveis(driver)
+        # tem que clicar em expandir filtro
+        # Clica no botão para expandir o filtro (corrigido: agora pelo ID, pois não há texto visível)        
+        util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btnMenuFiltro"))
+        time.sleep(1)
         
-    
-    
-    
-    
 def listar_e_baixar_entrevistas_disponiveis(driver):
     """
     Lista todos os ícones de lupa (entrevistas disponíveis), clica em cada um, coleta informações e baixa o PDF.
