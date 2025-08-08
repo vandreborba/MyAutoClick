@@ -179,7 +179,7 @@ def renomear_ultimo_pdf_baixado(info):
     except Exception as erro:
         print(f"[ERRO] Não foi possível renomear o arquivo PDF: {erro}")
 
-def executar(mes=None, ano=None, texto_input=None):
+def executar(mes=None, ano=None, texto_input=None, driver_in=None):
     global driver  
     print("Iniciando automação para baixar questionários...")
 
@@ -217,7 +217,14 @@ def executar(mes=None, ano=None, texto_input=None):
                 'numero_domicilio': partes[1].strip()
             })
 
-    driver = util_selenium.inicializar_webdriver_com_perfil()
+    driver = driver_in
+    if not driver:
+        driver = util_selenium.inicializar_webdriver_com_perfil()
+    # Fecha todas as abas abertas antes de iniciar a automação
+    try:
+        util_selenium.fechar_todas_abas(driver)
+    except Exception:
+        pass
     sequencia_portal(lista_entradas, mes, ano)    
    
     # Terminou:

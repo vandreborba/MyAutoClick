@@ -72,7 +72,7 @@ def solicitar_lista_setores_domicilios(texto=None):
             })
     return lista_entradas
 
-def executar(mes, ano, texto_input):
+def executar(mes, ano, texto_input, driver_in=None, fechar_driver=True):
     global driver, lista_entradas  
     print("Iniciando automação para Cancelar Liberção Codificação...")
 
@@ -84,12 +84,18 @@ def executar(mes, ano, texto_input):
     # Solicita a lista de setores e domicílios
     lista_entradas = solicitar_lista_setores_domicilios(texto_input)
 
-    driver = util_selenium.inicializar_webdriver_com_perfil()
+    driver = driver_in
+    if not driver:
+        driver = util_selenium.inicializar_webdriver_com_perfil()
     sequencia_portal(mes, ano)
 
     # Terminou:
-    driver.quit()
-    print("Automação concluída.")
+    if not fechar_driver:
+        print("Automação concluída. O WebDriver permanecerá aberto para próxima execução.")
+        return driver
+    else:
+        print("Automação concluída. Fechando o WebDriver.")
+        driver.quit()        
 
 def clicar_liberado_por_numero_domicilio(driver, numero_domicilio, tempo_espera=10):
     """
@@ -119,5 +125,10 @@ def clicar_liberado_por_numero_domicilio(driver, numero_domicilio, tempo_espera=
         label_liberado.click()
         return True
     except Exception as erro:
-        print(f"[ERRO] Não foi possível clicar no botão 'Liberado' do domicílio {numero_domicilio}: {erro}")
+        # Se não encontrar o label do domicílio, apenas exibe mensagem informativa
+        if "TimeoutException" in str(type(erro)):
+            print(f"[INFO] Label do domicílio {numero_domicilio} não encontrado na página.")
+            return True
+        else:
+            print(f"[ERRO] Não foi possível clicar no botão 'Liberado' do domicílio {numero_domicilio}: {erro}")
         return False

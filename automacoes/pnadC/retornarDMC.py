@@ -75,10 +75,13 @@ def executar():
 
     # Solicita mês e ano apenas uma vez
     mes, ano = liberarCodificacao.solicitar_mes_ano()
+    
+    driver = util_selenium.inicializar_webdriver_com_perfil()
+
     if lista_sem_siape and lista_dados:
-        cancelarCodificacao.executar(mes, ano, lista_sem_siape)    
-        associarEntrevistas.executar(lista_dados)
-        baixarQuestionario.executar(mes, ano, lista_sem_siape)
+        driver = cancelarCodificacao.executar(mes, ano, lista_sem_siape, driver, fechar_driver=False)    
+        driver = associarEntrevistas.executar(lista_dados, driver, fechar_driver=False)
+        baixarQuestionario.executar(mes, ano, lista_sem_siape, driver)
 
     print("Processamento concluído com sucesso.")
 

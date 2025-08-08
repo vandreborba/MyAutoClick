@@ -352,6 +352,28 @@ def alternar_para_ultima_aba(driver):
     driver.switch_to.window(handles[-1])
     logger.info("Alternado para a última aba/janela do navegador.")
 
+def fechar_todas_abas(driver):
+    """
+    Fecha todas as abas/janelas abertas do navegador, mantendo apenas a primeira.
+    Útil para garantir que a automação comece com apenas uma aba aberta.
+    """
+    try:
+        handles = driver.window_handles
+        if not handles:
+            return
+        # Mantém a primeira aba e fecha as demais
+        for h in handles[1:]:
+            try:
+                driver.switch_to.window(h)
+                driver.close()
+            except Exception as e:
+                logger.warning(f"Falha ao fechar aba/janela {h}: {e}")
+        # Garante foco na primeira aba remanescente
+        driver.switch_to.window(handles[0])
+        logger.info("Todas as abas extras foram fechadas; permaneceu apenas a primeira.")
+    except Exception as e:
+        logger.error(f"Erro ao fechar abas/janelas: {e}")
+
 def passar_mouse_sobre_elemento_por_texto(driver, texto, nome_tag='*', tempo_espera=10):
     """
     Move o mouse sobre um elemento identificado pelo texto, simulando o hover necessário para exibir menus suspensos.

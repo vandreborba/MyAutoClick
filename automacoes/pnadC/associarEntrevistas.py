@@ -6,28 +6,35 @@ from automacoes.pnadC import liberarCodificacao
 
 teste = False  # Define se está em modo de teste (True) ou produção (False)
 
-def executar(texto_input=None):
+def executar(texto_input=None, driver_in=None, fechar_driver=True):
     """
     Executa a automação para associar entrevistas. O parâmetro texto_input é opcional;
     se não for fornecido, será solicitado ao usuário.
     """
-    global driver  
+    global driver
     print("Iniciando automação para liberar codificação...")
-            
+    driver = driver_in
+
+    if not driver:
+        driver = util_selenium.inicializar_webdriver_com_perfil()        
+
     lista_entradas = solicitar_lista_setores_domicilios_siape(texto_input)
-    lista_entradas_processada = processar_lista_siape_setores(lista_entradas)    
+    lista_entradas_processada = processar_lista_siape_setores(lista_entradas)
     if not lista_entradas:
         print("Nenhuma entrada válida fornecida. Encerrando a automação.")
         return
 
     utils.solicitar_credenciais("Portalweb")
-    driver = util_selenium.inicializar_webdriver_com_perfil()
 
     iniciar_sequencia_portal(lista_entradas_processada)
 
     # Terminou:
-    driver.quit()
-    print("Automação concluída.")
+    if not fechar_driver:
+        print("Automação concluída. O WebDriver permanecerá aberto para próxima execução.")
+        return driver
+    else:
+        print("Automação concluída. O WebDriver foi recebido por parâmetro e não será fechado aqui.")
+        driver.quit()
 
 def iniciar_sequencia_portal(lista_entradas_processada):
     liberarCodificacao.abrir_pnad_c(driver)
