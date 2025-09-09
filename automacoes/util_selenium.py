@@ -708,6 +708,10 @@ def selecionar_opcoes_select_por_prefixo(driver, id_select, lista_prefixos):
         driver: Instância do WebDriver.
         id_select: ID do elemento <select>.
         lista_prefixos: Lista de strings com os prefixos desejados.
+    Retorna:
+        Tupla (lista_encontradas, lista_nao_encontradas) onde:
+        - lista_encontradas: Lista de prefixos que foram encontrados e selecionados
+        - lista_nao_encontradas: Lista de prefixos que não foram encontrados
     """
     from selenium.webdriver.support.ui import Select
     from selenium.webdriver.common.by import By
@@ -715,11 +719,20 @@ def selecionar_opcoes_select_por_prefixo(driver, id_select, lista_prefixos):
     select_element = driver.find_element(By.ID, id_select)
     select = Select(select_element)
     total_selecionados = 0
+    lista_encontradas = []
+    lista_nao_encontradas = lista_prefixos.copy()
+    
     for option in select.options:
         for prefixo in lista_prefixos:
             if option.text.startswith(prefixo):
                 option.click()  # Seleciona a opção
                 total_selecionados += 1
+                if prefixo not in lista_encontradas:
+                    lista_encontradas.append(prefixo)
+                if prefixo in lista_nao_encontradas:
+                    lista_nao_encontradas.remove(prefixo)
                 break  # Não precisa checar outros prefixos para esta opção
+    
     print(f"[INFO] Total de opções selecionadas no select '{id_select}': {total_selecionados}")
+    return lista_encontradas, lista_nao_encontradas
 

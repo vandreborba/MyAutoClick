@@ -83,6 +83,25 @@ def executar(mes, ano, texto_input, driver_in=None, fechar_driver=True):
         return
     # Solicita a lista de setores e domicílios
     lista_entradas = solicitar_lista_setores_domicilios(texto_input)
+    
+    # Remove itens duplicados mantendo a ordem original
+    lista_entradas_unicas = []
+    entradas_vistas = set()
+    for entrada in lista_entradas:
+        # Cria uma chave única baseada no setor e domicílio
+        chave_entrada = (entrada['numero_setor'], entrada['numero_domicilio'])
+        if chave_entrada not in entradas_vistas:
+            entradas_vistas.add(chave_entrada)
+            lista_entradas_unicas.append(entrada)
+    
+    # Atualiza a lista com os itens únicos
+    lista_entradas = lista_entradas_unicas
+    
+    # Exibe informação sobre duplicatas removidas
+    total_original = len(lista_entradas) + len(entradas_vistas) - len(lista_entradas_unicas)
+    if total_original > len(lista_entradas):
+        duplicatas_removidas = total_original - len(lista_entradas)
+        print(f"[INFO] {duplicatas_removidas} entrada(s) duplicada(s) removida(s). Total de entradas únicas: {len(lista_entradas)}")
 
     driver = driver_in
     if not driver:

@@ -1,10 +1,14 @@
 import time
+import colorama
 from automacoes import util_selenium, utils
 from selenium.webdriver.common.by import By
 
 from automacoes.pnadC import liberarCodificacao
 
 teste = False  # Define se está em modo de teste (True) ou produção (False)
+
+# Inicializa o colorama para suporte a cores no terminal
+colorama.init(autoreset=True)
 
 def executar(texto_input=None, driver_in=None, fechar_driver=True):
     """
@@ -51,6 +55,9 @@ def iniciar_sequencia_portal(lista_entradas_processada):
         util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "login"))
         time.sleep(2)
     
+    # Lista para coletar todas as unidades não encontradas
+    todas_unidades_nao_encontradas = []
+    
     # Percorre cada SIAPE e suas respectivas unidades de trabalho (setor+domicílio)
     for siape, lista_unidades in lista_entradas_processada.items():
         time.sleep(1)
@@ -63,7 +70,13 @@ def iniciar_sequencia_portal(lista_entradas_processada):
         util_selenium.clicar_elemento_com_fallback(driver, (By.CSS_SELECTOR, '[data-original-title="Associar Unidade de Trabalho"]'))
         # Seleciona as unidades de trabalho pelo prefixo (setor+domicílio)
         time.sleep(2)
-        util_selenium.selecionar_opcoes_select_por_prefixo(driver, "unidades_disponiveis", lista_unidades)
+        encontradas, nao_encontradas = util_selenium.selecionar_opcoes_select_por_prefixo(driver, "unidades_disponiveis", lista_unidades)
+        
+        # Adiciona as unidades não encontradas à lista global com o SIAPE correspondente
+        if nao_encontradas:
+            for unidade in nao_encontradas:
+                todas_unidades_nao_encontradas.append(f"SIAPE {siape}: {unidade}")
+        
         time.sleep(1)
         # Clica no botão para associar unidade
         util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btn_associar_unidade"))
@@ -77,6 +90,16 @@ def iniciar_sequencia_portal(lista_entradas_processada):
             util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btn_salvar_modal_unidade"))
         # Comentário: repete o processo para cada SIAPE e suas unidades
         time.sleep(1)
+    
+    # Exibe as unidades não encontradas em vermelho ao final
+    if todas_unidades_nao_encontradas:
+        print(f"\n{colorama.Fore.RED}⚠️  UNIDADES NÃO ENCONTRADAS:{colorama.Style.RESET_ALL}")
+        for unidade_nao_encontrada in todas_unidades_nao_encontradas:
+            print(f"{colorama.Fore.RED}❌ {unidade_nao_encontrada}{colorama.Style.RESET_ALL}")
+        print(f"{colorama.Fore.RED}Total de unidades não encontradas: {len(todas_unidades_nao_encontradas)}{colorama.Style.RESET_ALL}\n")
+    else:
+        print(f"{colorama.Fore.GREEN}✅ Todas as unidades foram encontradas e associadas com sucesso!{colorama.Style.RESET_ALL}\n")
+    
     # Exemplo testado:
     '''
     util_selenium.preencher_campo(driver, (By.ID, "cb_login"), "1202254")
