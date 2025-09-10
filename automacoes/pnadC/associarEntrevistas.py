@@ -60,9 +60,14 @@ def iniciar_sequencia_portal(lista_entradas_processada):
     
     # Percorre cada SIAPE e suas respectivas unidades de trabalho (setor+domicílio)
     for siape, lista_unidades in lista_entradas_processada.items():
-        time.sleep(1)
+        time.sleep(2)
         # Preenche o campo de matrícula (SIAPE)
-        util_selenium.preencher_campo(driver, (By.ID, "cb_login"), siape)        
+        try:
+            util_selenium.preencher_campo(driver, (By.ID, "cb_login"), siape)
+        except Exception as erro:
+            print(f"{colorama.Fore.RED}❌ Erro ao preencher SIAPE {siape}: {erro}. Passando para o próximo.{colorama.Style.RESET_ALL}")
+            continue
+        
         # Clica no botão de submit após preencher a matrícula
         util_selenium.clicar_elemento_com_fallback(driver, (By.ID, "btnSubmit"))
         time.sleep(2)

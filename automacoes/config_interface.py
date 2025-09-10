@@ -5,7 +5,7 @@ from automacoes.pnadC import baixarQuestionario, cancelarCodificacao, liberarCod
 from automacoes.pnadC import associarEntrevistas, retornarDMC
 
 # NÃºmero da versÃ£o do sistema
-VERSAO_SISTEMA = "0.23"
+VERSAO_SISTEMA = "0.25"
 
 # InstruÃ§Ãµes de uso do sistema
 # Constante que armazena as instruções de uso do sistema para exibição ao usuário.
